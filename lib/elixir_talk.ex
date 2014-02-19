@@ -1,9 +1,9 @@
 defmodule ElixirTalk do
-  use Application.Behaviour
+  def connect(ip \\ '127.0.0.1', port \\ 11300, timeout \\ 5000) do
+    ElixirTalk.Connect.start_link([ip, port, timeout])
+  end
 
-  # See http://elixir-lang.org/docs/stable/Application.Behaviour.html
-  # for more information on OTP Applications
-  def start(_type, _args) do
-    ElixirTalk.Supervisor.start_link
+  def close(pid) do
+    ElixirTalk.Connect.close(pid)
   end
 end
