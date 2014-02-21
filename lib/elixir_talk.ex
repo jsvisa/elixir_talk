@@ -34,6 +34,22 @@ defmodule ElixirTalk do
     ElixirTalk.Connect.call(:touch, id)
   end
 
+  def peek(id) do
+    ElixirTalk.Connect.call(:peek, id)
+  end
+
+  def peek_ready do
+    ElixirTalk.Connect.call(:peek_ready)
+  end
+
+  def peek_delayed do
+    ElixirTalk.Connect.call(:peek_delayed)
+  end
+
+  def peek_buried do
+    ElixirTalk.Connect.call(:peek_buried)
+  end
+
   def kick(bound) do
     ElixirTalk.Connect.call(:kick, bound)
   end
@@ -71,6 +87,19 @@ defmodule ElixirTalk do
   end
 
   def reserve(timeout) do
-    ElixirTalk.Connect.call_forever(:reserve_with_timeout)
+    ElixirTalk.Connect.call_forever(:reserve_with_timeout, timeout)
   end
+
+  def bury(id, pri \\ 0) do
+    ElixirTalk.Connect.call(:bury, id, pri)
+  end
+
+  def pause_tube(tube, delay) do
+    ElixirTalk.Connect.call(:pause_tube, tube, delay)
+  end
+
+  def release(id, opts \\ []) do
+    ElixirTalk.Connect.call(:release, id, opts)
+  end
+
 end
