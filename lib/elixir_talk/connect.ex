@@ -4,8 +4,7 @@ defmodule ElixirTalk.Connect do
   defrecord State, socket: -1
 
   def start_link(args) do
-    IO.puts "start_link"
-    IO.puts "#{inspect args}"
+    IO.puts "start_link #{inspect args}"
     :gen_server.start_link({:local, __MODULE__}, __MODULE__, args, [])
   end
 
@@ -27,7 +26,6 @@ defmodule ElixirTalk.Connect do
   end
 
   def init([host, port, timeout]) do
-    IO.puts "init"
     {:ok, host} = :inet.parse_address(bitstring_to_list host)
     case :gen_tcp.connect(host, port, [:binary, {:packet, 0}, {:active, false}], timeout) do
       {:ok, socket} ->
