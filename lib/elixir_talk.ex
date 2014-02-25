@@ -1,8 +1,6 @@
 defmodule ElixirTalk do
-  # import ElixirTalk.Connect
 
-  def connect(host \\ "10.1.1.5", port \\ 11300, timeout \\ 5000) do
-    IO.puts "connect"
+  def connect(host \\ "127.0.0.1", port \\ 11300, timeout \\ :infinity) do
     ElixirTalk.Connect.start_link([host, port, timeout])
   end
 
