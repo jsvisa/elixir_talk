@@ -4,7 +4,6 @@ defmodule ElixirTalk.Connect do
   defrecord State, socket: -1
 
   def start_link(args) do
-    IO.puts "start_link #{inspect args}"
     :gen_server.start_link({:local, __MODULE__}, __MODULE__, args, [])
   end
 
@@ -17,7 +16,6 @@ defmodule ElixirTalk.Connect do
   end
 
   def call(oper, data, opts) do
-    IO.puts "#{oper} #{inspect data} #{inspect opts}"
     :gen_server.call(__MODULE__, {oper, data, opts})
   end
 
@@ -43,33 +41,28 @@ defmodule ElixirTalk.Connect do
     ttr = Keyword.get(opts, :ttr, 60)
     bytes = String.length(data)
     bin_data = "put #{pri} #{delay} #{ttr} #{bytes}\r\n#{data}\r\n"
-    IO.puts bin_data
     :gen_tcp.send(socket, bin_data)
     {:ok, result} = :gen_tcp.recv(socket, 0)
     {:reply, get_result(result), state}
   end
 
-  def handle_call({:release, data, opts}, _from, state = State[socket: socket]) do
+  def handle_call({:release, id, opts}, _from, state = State[socket: socket]) do
     pri = Keyword.get(opts, :pri, 0)
     delay = Keyword.get(opts, :delay, 0)
-    bin_data = "release #{pri} #{delay}\r\n"
-    IO.puts bin_data
+    bin_data = "release #{id} #{pri} #{delay}\r\n"
     :gen_tcp.send(socket, bin_data)
     {:ok, result} = :gen_tcp.recv(socket, 0)
-    IO.puts "#{inspect data}"
     {:reply, get_result(result), state}
   end
 
   def handle_call({cmd, data, opt}, _from, state = State[socket: socket]) do
     bin_data = String.replace("#{cmd}", "_", "-") <> " #{data} #{opt}\r\n"
-    IO.puts bin_data
     :gen_tcp.send(socket, bin_data)
     {:ok, result} = :gen_tcp.recv(socket, 0)
     {:reply, get_result(result), state}
   end
 
   def handle_call({cmd, data}, _from, state = State[socket: socket]) do
-    # IO.puts inspect cmd
     cmd = String.replace("#{cmd}", "_", "-")
     bin_data = cond do
       data == [] -> "#{cmd}\r\n"
@@ -92,11 +85,10 @@ defmodule ElixirTalk.Connect do
   end
 
   ######################
-  ## Privacy Api
+  ## Privacy Apis
   ######################
 
   defp get_result(result) do
-    # IO.puts inspect result
     [h | t] = String.split(result, " ", global: false)
     t = list_to_bitstring(t)
     # kick out the '\r\n
@@ -117,7 +109,6 @@ defmodule ElixirTalk.Connect do
     {str_to_atom(res), num}
   end
   defp do_result("OK", tail) do
-    # IO.inspect tail
     if String.contains?(tail, ":") do
       do_stats(tail)
     else
