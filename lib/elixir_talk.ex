@@ -1,7 +1,16 @@
 defmodule ElixirTalk do
 
   def connect(host \\ "127.0.0.1", port \\ 11300, timeout \\ :infinity) do
-    ElixirTalk.Connect.start_link([host, port, timeout])
+    case ElixirTalk.Supervisor.start_link([host, port, timeout]) do
+      {:ok, pid} ->
+        {:ok, pid}
+      {:error, {:already_started, pid}} ->
+        # ignore the return value of Connect's start_link
+        {_, _} = ElixirTalk.Connect.start_link([host, port, timeout])
+        {:ok, pid}
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   def quit do

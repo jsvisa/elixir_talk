@@ -75,7 +75,6 @@ defmodule ElixirTalk.Connect do
       data == [] -> "#{cmd}\r\n"
       true -> "#{cmd} #{data}\r\n"
     end
-    # IO.puts bin_data
 
     :gen_tcp.send(socket, bin_data)
     {:ok, result} = :gen_tcp.recv(socket, 0)
@@ -89,7 +88,12 @@ defmodule ElixirTalk.Connect do
   def terminate(:normal, state) do
     State[socket: socket] = state
     :gen_tcp.close(socket)
+    :ok
   end
+
+  ######################
+  ## Privacy Api
+  ######################
 
   defp get_result(result) do
     # IO.puts inspect result
@@ -160,6 +164,4 @@ defmodule ElixirTalk.Connect do
     end
     Enum.filter_map(origin, fn(x) -> String.contains?(x, ":") end, str_to_keyword)
   end
-
-
 end

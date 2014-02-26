@@ -10,8 +10,7 @@ defmodule ElixirTalk.Mixfile do
 
   # Configuration for the OTP application
   def application do
-    # [mod: { ElixirTalk, [] }]
-    []
+    [registered: [ElixirTalk.Supervisor, ElixirTalk.Connect]]
   end
 
   # Returns the list of dependencies in the format:
