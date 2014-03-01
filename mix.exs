@@ -1,8 +1,8 @@
-defmodule ElixirTalk.Mixfile do
+defmodule Beanstalk.Mixfile do
   use Mix.Project
 
   def project do
-    [ app: :elixir_talk,
+    [ app: :beanstalk,
       version: "0.0.1",
       elixir: "~> 0.12.4-dev",
       deps: deps ]
@@ -10,7 +10,7 @@ defmodule ElixirTalk.Mixfile do
 
   # Configuration for the OTP application
   def application do
-    [registered: [ElixirTalk.Supervisor, ElixirTalk.Connect]]
+    [registered: [Beanstalk.Supervisor, Beanstalk.Connect]]
   end
 
   # Returns the list of dependencies in the format:

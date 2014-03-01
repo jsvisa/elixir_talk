@@ -1,4 +1,4 @@
-defmodule ElixirTalk.Supervisor do
+defmodule Beanstalk.Supervisor do
   use Supervisor.Behaviour
 
   def start_link(args) do
@@ -8,7 +8,7 @@ defmodule ElixirTalk.Supervisor do
   def init(args) do
     # The child process is restarted only if it terminates abnormally,
     # i.e. with another exit reason than :normal, :shutdown or { :shutdown, term };}
-    children = [ worker(ElixirTalk.Connect, [args], restart: :transient) ]
+    children = [ worker(Beanstalk.Connect, [args], restart: :transient) ]
     supervise(children, strategy: :one_for_one)
   end
 end

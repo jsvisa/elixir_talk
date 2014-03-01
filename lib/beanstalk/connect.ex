@@ -1,4 +1,4 @@
-defmodule ElixirTalk.Connect do
+defmodule Beanstalk.Connect do
   use GenServer.Behaviour
 
   defrecord State, socket: -1
