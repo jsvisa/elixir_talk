@@ -1,7 +1,7 @@
-# ElixirTalk
+# Beanstalk
 
 ## Overview
-`ElixirTalk` is an Elixir client for [beanstalkd](http://kr.github.com/beanstalkd/).
+`Beanstalk` is an Elixir client for [beanstalkd](http://kr.github.com/beanstalkd/).
 It supported all commands defined in [Beanstalk Protocol](https://raw.github.com/kr/beanstalkd/master/doc/protocol.txt)
 
 ## Installation & Setup
@@ -15,10 +15,10 @@ Clone this repository and then compile the project:
 You'll need **beanstalkd** listening at the host: `10.1.1.5`, and port: 14711, simply start it with:
 `$ beanstalkd -l 10.1.1.5 -p 14711`
 
-Start the interactive shell and run the `ElixirTalk.connect` method to run it:
+Start the interactive shell and run the `Beanstalk.connect` method to run it:
 
     iex -S mix
-    iex(1)> {:ok, pid} = ElixirTalk.connect("10.1.1.5", 14711)
+    iex(1)> {:ok, pid} = Beanstalk.connect("10.1.1.5", 14711)
 If you leave out the two arguments, `"127.0.0.1"` and `11300` are the default value, also there is a `timeout` parameter
 which determines how long, **in millliseconds**, the socket will wait for **beanstalkd** to respond to its' initial
 connection, default to `:infinity`.
@@ -26,24 +26,24 @@ connection, default to `:infinity`.
 ## Basic Operation
 After connection to the beanstalkd successfully, we can enqueue our jobs:
 
-    iex(2)> ElixirTalk.put("hello world")
+    iex(2)> Beanstalk.put("hello world")
     {:inserted, 1}
 
 Or we can get jobs:
 
-    iex(3)> ElixirTalk.reserve
+    iex(3)> Beanstalk.reserve
     {:reserved, 1, "hello world"}
 
 Once we are finishing a job, we have to delete it, otherwise jobs are re-queued by **beanstalkd**
 after a `:ttr` "time to run" (60 seconds, per default) is surpassed. A job is marked as finished, by calling delete:
 
-    iex(4)> ElixirTalk.delete(1)
+    iex(4)> Beanstalk.delete(1)
     :deleted
 
 `reserve` blocks until a job is ready, possibly forever. We can invoke reserve with a timeout **in seconds**,
 to indicate how long we want to wait to receive a job. If such a reserve times out, it will return `:timed_out`:
 
-    iex(5)> ElixirTalk.reserve(5)
+    iex(5)> Beanstalk.reserve(5)
     :timed_out
 
 If you use a timeout of 0, reserve will immediately return either a job or `:timed_out`.
@@ -53,60 +53,60 @@ If you use a timeout of 0, reserve will immediately return either a job or `:tim
 A single **beanstalkd** server can provide many different queues, called "tubes" in **beanstalkd**.
 To see all available tubes:
 
-    iex(6)> ElixirTalk.list_tubes
+    iex(6)> Beanstalk.list_tubes
     ["default"]
 
 A **beanstalkd** client can choose one tube into which its job are putted. This is the tube "used" by the client.
 To see what tube you are currently using:
 
-    iex(7)> ElixirTalk.list_tube_used
+    iex(7)> Beanstalk.list_tube_used
     {:using, "default"}
 
 Unless told otherwise, a client uses the `"default"` tube. If you want to use a different tube:
 
-    iex(8)> ElixirTalk.use("notDefault")
+    iex(8)> Beanstalk.use("notDefault")
     {:using, "notDefault"}
-    iex(8)> ElixirTalk.list_tube_used
+    iex(8)> Beanstalk.list_tube_used
     {:using, "notDefault"}
 
 If you decide to use a tube which does not yet exist, the tube is automatically created by **beanstalkd**, so you can see
 we initially used the `"default"` tube. Of course, you can always switch back to the default tube.
 Tubes that don't have any client using or watching, be vanished automatically:
 
-    iex(9)> ElixirTalk.list_tubes
+    iex(9)> Beanstalk.list_tubes
     ["default", "notDefault"]
-    iex(10)> ElixirTalk.use("default")
+    iex(10)> Beanstalk.use("default")
     {:using, "default"}
-    iex(11)> ElixirTalk.list_tubes
+    iex(11)> Beanstalk.list_tubes
     ["default"]
 
 Further more, a beanstalkd client can choose many tubes to `reserve` jobs from. These tubes are `watched` by the client.
 To see what tubes you are currently watching:
 
-    iex(12)> ElixirTalk.list_tubes_watched
+    iex(12)> Beanstalk.list_tubes_watched
     ["default"]
 
 To watch an additional tube:
 
-    iex(13)> ElixirTalk.watch("notDefault")
+    iex(13)> Beanstalk.watch("notDefault")
     {:watching, 2}
-    iex(14)> ElixirTalk.list_tubes_watched
+    iex(14)> Beanstalk.list_tubes_watched
     ["default", "notDefault"]
 
 The same to `use`, tubes that do not yet exist are created automatically once you start watching them.
 
 To stop `watch` a tube:
 
-    iex(15)> ElixirTalk.ignore("default")
+    iex(15)> Beanstalk.ignore("default")
     {:watching, 1}
-    iex(16)> ElixirTalk.list_tubes_watched
+    iex(16)> Beanstalk.list_tubes_watched
     ["notDefault"]
 
 You can't watch zero tubes. So if you try to ignore the last tube you are watching, this is silently return `:not_ignored`:
 
-    iex(17)> ElixirTalk.ignore("notDefault")
+    iex(17)> Beanstalk.ignore("notDefault")
     :not_ignored
-    iex(18)> ElixirTalk.list_tubes_watched
+    iex(18)> Beanstalk.list_tubes_watched
     ["notDefault"]
 
 Note that `use` and `watch` these concerns are fully orthogonal: for example, when you use a tube, it is not
@@ -117,19 +117,19 @@ to put your jobs, while in another process you `watch` a job just to get the put
 
 **Beanstalkd** accumulates various statistics at the server, tube and job level. Statistical details for a job can only be retrieved during the job's lifecycle. So let's create another job:
 
-    iex(19)> ElixirTalk.stats_job(27)
+    iex(19)> Beanstalk.stats_job(27)
     [id: 27, tube: "default", state: "ready", pri: 0, age: 379859, delay: 0,
      ttr: 60, "time-left": 0, file: 0, reserves: 2, timeouts: 2, releases: 0,
      buries: 0, kicks: 0]
 
 You can't access a deleted or not existed job's stats, or you'll only get a `:not_found`.
 
-    iex(20)> ElixirTalk.stats_job(26)
+    iex(20)> Beanstalk.stats_job(26)
     :not_found
 
 You can also access a tube's statistics:
 
-    iex(21)> ElixirTalk.stats_tube("default")
+    iex(21)> Beanstalk.stats_tube("default")
     [name: "default", "current-jobs-urgent": 19, "current-jobs-ready": 19,
      "current-jobs-reserved": 0, "current-jobs-delayed": 0,
      "current-jobs-buried": 0, "total-jobs": 37, "current-using": 1,
@@ -138,7 +138,7 @@ You can also access a tube's statistics:
 
 Finally, there's an abundant amount of server-level statistics accessible via the Connection's stats method:
 
-    iex(22)> ElixirTalk.stats
+    iex(22)> Beanstalk.stats
     ["current-jobs-urgent": 22, "current-jobs-ready": 28,
      "current-jobs-reserved": 0, "current-jobs-delayed": 0,
      "current-jobs-buried": 0, "cmd-put": 49, "cmd-peek": 0, "cmd-peek-ready": 13,
@@ -158,5 +158,5 @@ Finally, there's an abundant amount of server-level statistics accessible via th
 ## TODO
 1. compete the test cases
 2. add some advanced Operations
-3. add `ElixirTalk` to one supervisor process
+3. add `Beanstalk` to one supervisor process
 
