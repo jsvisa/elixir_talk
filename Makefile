@@ -1,4 +1,4 @@
-.PHONY: compile
+.PHONY: all test clean
 
 all: compile
 
@@ -7,6 +7,9 @@ deps:
 
 compile:
 	mix compile
+
+test:
+	mix test
 
 clean:
 	mix clean
