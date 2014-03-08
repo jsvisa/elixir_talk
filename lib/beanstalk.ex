@@ -52,7 +52,7 @@ defmodule Beanstalk do
               increase the ttr to 1.
   """
   @spec put(bitstring) :: result
-  @spec put(bitstring, Keyword) :: result
+  @spec put(bitstring, Keyword.t) :: result
   def put(data, opts \\ []) do
     Beanstalk.Connect.call(:put, data, opts)
   end
@@ -174,7 +174,7 @@ defmodule Beanstalk do
   Give statistical information about the system as a whole.
   """
 
-  @spec stats() :: Keyword
+  @spec stats() :: Keyword.t
   def stats do
     Beanstalk.Connect.call(:stats)
   end
@@ -184,7 +184,7 @@ defmodule Beanstalk do
   it exists.
   """
 
-  @spec stats_job(non_neg_integer) :: Keyword | :not_found
+  @spec stats_job(non_neg_integer) :: Keyword.t | :not_found
   def stats_job(id) do
     Beanstalk.Connect.call(:stats_job, id)
   end
@@ -194,7 +194,7 @@ defmodule Beanstalk do
   if it exists.
   """
 
-  @spec stats_tube(bitstring) :: Keyword | :not_found
+  @spec stats_tube(bitstring) :: Keyword.t | :not_found
   def stats_tube(tube) do
     Beanstalk.Connect.call(:stats_tube, tube)
   end
@@ -276,7 +276,7 @@ defmodule Beanstalk do
   """
 
   @spec release(non_neg_integer) :: :released | :buried | :not_found
-  @spec release(non_neg_integer, Keyword) :: :released | :buried | :not_found
+  @spec release(non_neg_integer, Keyword.t) :: :released | :buried | :not_found
   def release(id, opts \\ []) do
     Beanstalk.Connect.call(:release, id, opts)
   end
