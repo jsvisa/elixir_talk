@@ -4,13 +4,13 @@ defmodule Beanstalk.Mixfile do
   def project do
     [ app: :beanstalk,
       version: "0.0.1",
-      elixir: "~> 0.12.4-dev",
+      elixir: "~> 0.14.3",
       deps: deps ]
   end
 
   # Configuration for the OTP application
   def application do
-    [registered: [Beanstalk.Supervisor, Beanstalk.Connect]]
+    []
   end
 
   # Returns the list of dependencies in the format:
