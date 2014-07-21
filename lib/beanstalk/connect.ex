@@ -2,23 +2,23 @@ defmodule Beanstalk.Connect do
   use GenServer
 
   def start_link(args) do
-    :gen_server.start_link({:local, __MODULE__}, __MODULE__, args, [])
+    :gen_server.start_link(__MODULE__, args, [])
   end
 
-  def quit() do
-    :gen_server.cast(__MODULE__, :stop)
+  def quit(pid) do
+    :gen_server.cast(pid, :stop)
   end
 
-  def call(oper, data \\ []) do
-    :gen_server.call(__MODULE__, {oper, data})
+  def call(pid, oper, data \\ []) do
+    :gen_server.call(pid, {oper, data})
   end
 
-  def call(oper, data, opts) do
-    :gen_server.call(__MODULE__, {oper, data, opts})
+  def call(pid, oper, data, opts) do
+    :gen_server.call(pid, {oper, data, opts})
   end
 
-  def call_forever(oper, data \\ []) do
-    :gen_server.call(__MODULE__, {oper, data}, :infinity)
+  def call_forever(pid, oper, data \\ []) do
+    :gen_server.call(pid, {oper, data}, :infinity)
   end
 
   def init([host, port, timeout]) do

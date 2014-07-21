@@ -7,32 +7,23 @@ defmodule Beanstalk do
   Copyright 2014 by jsvisa(delweng@gmail.com)
   """
   @type result :: {:inserted, non_neg_integer} | {:buried, non_neg_integer} | {:expected_crlf} | :job_to_big | :darining
-  @vsn 0.1
+  @vsn 1.0
 
   @doc """
   Connect to the beanstalkd server.
   """
 
   @spec connect(bitstring, integer, integer) :: {:ok, pid} | {:error, term}
-  def connect(host \\ "127.0.0.1", port \\ 11300, timeout \\ :infinity) do
-    case Beanstalk.Supervisor.start_link([host, port, timeout]) do
-      {:ok, pid} ->
-        {:ok, pid}
-      {:error, {:already_started, pid}} ->
-        # ignore the return value of Connect's start_link
-        {_, _} = Beanstalk.Connect.start_link([host, port, timeout])
-        {:ok, pid}
-      {:error, reason} ->
-        {:error, reason}
-    end
+  def connect(host \\ "192.168.10.61", port \\ 11300, timeout \\ :infinity) do
+    Beanstalk.Connect.start_link([host, port, timeout])
   end
 
   @doc """
   Close the connection to server.
   """
-  @spec quit() :: :ok
-  def quit do
-    Beanstalk.Connect.quit
+  @spec quit(pid) :: :ok
+  def quit(pid) do
+    Beanstalk.Connect.quit(pid)
   end
 
   @doc """
@@ -51,19 +42,19 @@ defmodule Beanstalk do
               The minimum ttr is 1. If the client sends 0, the server will silently
               increase the ttr to 1.
   """
-  @spec put(bitstring) :: result
-  @spec put(bitstring, Keyword) :: result
-  def put(data, opts \\ []) do
-    Beanstalk.Connect.call(:put, data, opts)
+  @spec put(pid, bitstring) :: result
+  @spec put(pid, bitstring, Keyword) :: result
+  def put(pid, data, opts \\ []) do
+    Beanstalk.Connect.call(pid, :put, data, opts)
   end
 
   @doc """
   Use a tube to `put` jobs.
   """
 
-  @spec use(bitstring) :: {:using, bitstring}
-  def use(tube) do
-    Beanstalk.Connect.call(:use, tube)
+  @spec use(pid, bitstring) :: {:using, bitstring}
+  def use(pid, tube) do
+    Beanstalk.Connect.call(pid, :use, tube)
   end
 
   @doc """
@@ -72,17 +63,17 @@ defmodule Beanstalk do
   watch list.
   """
 
-  @spec watch(bitstring) :: {:watcing, non_neg_integer}
-  def watch(tube) do
-    Beanstalk.Connect.call(:watch, tube)
+  @spec watch(pid, bitstring) :: {:watcing, non_neg_integer}
+  def watch(pid, tube) do
+    Beanstalk.Connect.call(pid, :watch, tube)
   end
 
   @doc """
   Remove the named tube from the watch list for the current connection.
   """
-  @spec ignore(bitstring) :: {:watching, non_neg_integer} | :not_ingored
-  def ignore(tube) do
-    Beanstalk.Connect.call(:ignore, tube)
+  @spec ignore(pid, bitstring) :: {:watching, non_neg_integer} | :not_ingored
+  def ignore(pid, tube) do
+    Beanstalk.Connect.call(pid, :ignore, tube)
   end
 
   @doc """
@@ -92,9 +83,9 @@ defmodule Beanstalk do
   buried.
   """
 
-  @spec delete(non_neg_integer) :: :deleted | :not_found
-  def delete(id) do
-    Beanstalk.Connect.call(:delete, id)
+  @spec delete(pid, non_neg_integer) :: :deleted | :not_found
+  def delete(pid, id) do
+    Beanstalk.Connect.call(pid, :delete, id)
   end
 
   @doc """
@@ -106,45 +97,45 @@ defmodule Beanstalk do
   release of a reserved job until TTR seconds from when the command is issued.
   """
 
-  @spec touch(non_neg_integer) :: :touched | :not_found
-  def touch(id) do
-    Beanstalk.Connect.call(:touch, id)
+  @spec touch(pid, non_neg_integer) :: :touched | :not_found
+  def touch(pid, id) do
+    Beanstalk.Connect.call(pid, :touch, id)
   end
 
   @doc """
   Let the client inspect a job in the system. Peeking the given job id
   """
 
-  @spec peek(non_neg_integer) :: {:found, non_neg_integer} | :not_found
-  def peek(id) do
-    Beanstalk.Connect.call(:peek, id)
+  @spec peek(pid, non_neg_integer) :: {:found, non_neg_integer} | :not_found
+  def peek(pid, id) do
+    Beanstalk.Connect.call(pid, :peek, id)
   end
 
   @doc """
   Peeking the next ready job.
   """
 
-  @spec peek_ready() :: {:found, non_neg_integer} | :not_found
-  def peek_ready do
-    Beanstalk.Connect.call(:peek_ready)
+  @spec peek_ready(pid) :: {:found, non_neg_integer} | :not_found
+  def peek_ready(pid) do
+    Beanstalk.Connect.call(pid, :peek_ready)
   end
 
   @doc """
   Peeking the delayed job with the shortest delay left.
   """
 
-  @spec peek_delayed() :: {:found, non_neg_integer} | :not_found
-  def peek_delayed do
-    Beanstalk.Connect.call(:peek_delayed)
+  @spec peek_delayed(pid) :: {:found, non_neg_integer} | :not_found
+  def peek_delayed(pid) do
+    Beanstalk.Connect.call(pid, :peek_delayed)
   end
 
   @doc """
   Peeking the next job in the list of buried jobs.
   """
 
-  @spec peek_buried() :: {:found, non_neg_integer} | :not_found
-  def peek_buried do
-    Beanstalk.Connect.call(:peek_buried)
+  @spec peek_buried(pid) :: {:found, non_neg_integer} | :not_found
+  def peek_buried(pid) do
+    Beanstalk.Connect.call(pid, :peek_buried)
   end
 
   @doc """
@@ -154,9 +145,9 @@ defmodule Beanstalk do
   Apply only to the currently used tube.
   """
 
-  @spec kick(non_neg_integer) :: {:kicked, non_neg_integer}
-  def kick(bound) do
-    Beanstalk.Connect.call(:kick, bound)
+  @spec kick(pid, non_neg_integer) :: {:kicked, non_neg_integer}
+  def kick(pid, bound) do
+    Beanstalk.Connect.call(pid, :kick, bound)
   end
 
   @doc """
@@ -165,18 +156,18 @@ defmodule Beanstalk do
   currently belongs.
   """
 
-  @spec kick_job(non_neg_integer) :: :kicked | :not_found
-  def kick_job(id) do
-    Beanstalk.Connect.call(:kick_job, id)
+  @spec kick_job(pid, non_neg_integer) :: :kicked | :not_found
+  def kick_job(pid, id) do
+    Beanstalk.Connect.call(pid, :kick_job, id)
   end
 
   @doc """
   Give statistical information about the system as a whole.
   """
 
-  @spec stats() :: Keyword
-  def stats do
-    Beanstalk.Connect.call(:stats)
+  @spec stats(pid) :: Keyword
+  def stats(pid) do
+    Beanstalk.Connect.call(pid, :stats)
   end
 
   @doc """
@@ -184,9 +175,9 @@ defmodule Beanstalk do
   it exists.
   """
 
-  @spec stats_job(non_neg_integer) :: Keyword | :not_found
-  def stats_job(id) do
-    Beanstalk.Connect.call(:stats_job, id)
+  @spec stats_job(pid, non_neg_integer) :: Keyword | :not_found
+  def stats_job(pid, id) do
+    Beanstalk.Connect.call(pid, :stats_job, id)
   end
 
   @doc """
@@ -194,54 +185,54 @@ defmodule Beanstalk do
   if it exists.
   """
 
-  @spec stats_tube(bitstring) :: Keyword | :not_found
-  def stats_tube(tube) do
-    Beanstalk.Connect.call(:stats_tube, tube)
+  @spec stats_tube(pid, bitstring) :: Keyword | :not_found
+  def stats_tube(pid, tube) do
+    Beanstalk.Connect.call(pid, :stats_tube, tube)
   end
 
   @doc """
   Return a list of all existing tubes in the server.
   """
 
-  @spec list_tubes() :: List
-  def list_tubes do
-    Beanstalk.Connect.call(:list_tubes)
+  @spec list_tubes(pid) :: List
+  def list_tubes(pid) do
+    Beanstalk.Connect.call(pid, :list_tubes)
   end
 
   @doc """
   Return the tube currently being used by the client.
   """
 
-  @spec list_tube_used() :: {:using, bitstring}
-  def list_tube_used do
-    Beanstalk.Connect.call(:list_tube_used)
+  @spec list_tube_used(pid) :: {:using, bitstring}
+  def list_tube_used(pid) do
+    Beanstalk.Connect.call(pid, :list_tube_used)
   end
 
   @doc """
   Return the tubes currently being watched by the client.
   """
 
-  @spec list_tubes_watched() :: List
-  def list_tubes_watched do
-    Beanstalk.Connect.call(:list_tubes_watched)
+  @spec list_tubes_watched(pid) :: List
+  def list_tubes_watched(pid) do
+    Beanstalk.Connect.call(pid, :list_tubes_watched)
   end
 
   @doc """
   Get a job from the currently watched tubes.
   """
 
-  @spec reserve() :: {:reserved, non_neg_integer, bitstring}
-  def reserve do
-    Beanstalk.Connect.call_forever(:reserve)
+  @spec reserve(pid) :: {:reserved, non_neg_integer, bitstring}
+  def reserve(pid) do
+    Beanstalk.Connect.call_forever(pid, :reserve)
   end
 
   @doc """
   Get a job from the currently watched tubes with timeout of seconds.
   """
 
-  @spec reserve(non_neg_integer) :: {:reserved, non_neg_integer, bitstring} | :deadline_soon | :timed_out
-  def reserve(timeout) do
-    Beanstalk.Connect.call_forever(:reserve_with_timeout, timeout)
+  @spec reserve(pid, non_neg_integer) :: {:reserved, non_neg_integer, bitstring} | :deadline_soon | :timed_out
+  def reserve(pid, timeout) do
+    Beanstalk.Connect.call_forever(pid, :reserve_with_timeout, timeout)
   end
 
   @doc """
@@ -250,19 +241,19 @@ defmodule Beanstalk do
   kicks them with the `kick` command.
   """
 
-  @spec bury(non_neg_integer) :: :buried | :not_found
-  @spec bury(non_neg_integer, non_neg_integer) :: :buried | :not_found
-  def bury(id, pri \\ 0) do
-    Beanstalk.Connect.call(:bury, id, pri)
+  @spec bury(pid, non_neg_integer) :: :buried | :not_found
+  @spec bury(pid, non_neg_integer, non_neg_integer) :: :buried | :not_found
+  def bury(pid, id, pri \\ 0) do
+    Beanstalk.Connect.call(pid, :bury, id, pri)
   end
 
   @doc """
   Delay any new job being reserved for a given time.
   """
 
-  @spec pause_tube(bitstring, non_neg_integer) :: :paused | :not_found
-  def pause_tube(tube, delay) do
-    Beanstalk.Connect.call(:pause_tube, tube, delay)
+  @spec pause_tube(pid, bitstring, non_neg_integer) :: :paused | :not_found
+  def pause_tube(pid, tube, delay) do
+    Beanstalk.Connect.call(pid, :pause_tube, tube, delay)
   end
 
   @doc """
@@ -275,10 +266,10 @@ defmodule Beanstalk do
               The job will be in the "delayed" state during this time.
   """
 
-  @spec release(non_neg_integer) :: :released | :buried | :not_found
-  @spec release(non_neg_integer, Keyword) :: :released | :buried | :not_found
-  def release(id, opts \\ []) do
-    Beanstalk.Connect.call(:release, id, opts)
+  @spec release(pid, non_neg_integer) :: :released | :buried | :not_found
+  @spec release(pid, non_neg_integer, Keyword) :: :released | :buried | :not_found
+  def release(pid, id, opts \\ []) do
+    Beanstalk.Connect.call(pid, :release, id, opts)
   end
 
 end
