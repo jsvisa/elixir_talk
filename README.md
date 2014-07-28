@@ -32,7 +32,7 @@ After connection to the beanstalkd successfully, we can enqueue our jobs:
 Or we can get jobs:
 
     iex(3)> ElixirTalk.reserve(pid)
-    {:reserved, 1, "hello world"}
+    {:reserved, 1, {11, "hello world"}}
 
 Once we are finishing a job, we have to delete it, otherwise jobs are re-queued by **beanstalkd**
 after a `:ttr` "time to run" (60 seconds, per default) is surpassed. A job is marked as finished, by calling delete:

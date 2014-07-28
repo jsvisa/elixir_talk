@@ -230,7 +230,9 @@ defmodule ElixirTalk do
   Get a job from the currently watched tubes with timeout of seconds.
   """
 
-  @spec reserve(pid, non_neg_integer) :: {:reserved, non_neg_integer, bitstring} | :deadline_soon | :timed_out
+  @spec reserve(pid, non_neg_integer) :: {:reserved, non_neg_integer, {non_neg_integer, binary}} |
+                                         :deadline_soon |
+                                         :timed_out
   def reserve(pid, timeout) do
     ElixirTalk.Connect.call(pid, {:reserve_with_timeout, timeout}, :infinity)
   end

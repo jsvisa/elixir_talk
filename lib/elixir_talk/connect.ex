@@ -150,9 +150,9 @@ defmodule ElixirTalk.Connect do
   defp do_stats(tail) do
     origin = String.split(tail, "\n")
     str_to_keyword = fn(str) ->
-      [a, b] = String.split(str, ":", parts: 2)
+      [a, b] = String.split(str, ": ", parts: 2)
       {str_to_atom(a), str_to_num(b)}
     end
-    Enum.filter_map(origin, &String.contains?(&1, ":"), str_to_keyword)
+    Enum.filter_map(origin, &(String.contains?(&1, ":")), str_to_keyword)
   end
 end
