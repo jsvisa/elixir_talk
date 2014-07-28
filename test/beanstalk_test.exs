@@ -2,10 +2,16 @@ defmodule BeanstalkTest do
   use ExUnit.Case
 
   setup do
-    # IO.puts "connect to beanstalkd first"
     {:ok, pid} = Beanstalk.connect "192.168.10.61"
+
+    {m, s, ms} = :os.timestamp
+    tube = "ElixirTalk_#{m}_#{s}_#{ms}"
+    Beanstalk.use pid, tube
+    Beanstalk.watch pid, tube
+    Beanstalk.ignore pid, "default"
+
     on_exit fn -> Beanstalk.quit(pid) end
-    {:ok, [pid: pid]}
+    {:ok, [tube: tube, pid: pid]}
   end
 
   test "`put`", ctx do
@@ -25,43 +31,61 @@ defmodule BeanstalkTest do
   end
 
   test "`use`", ctx do
+    {:using, now_tube} = Beanstalk.list_tube_used(ctx[:pid])
     tube = "not_default"
-    assert {:using, data} = Beanstalk.use ctx[:pid], tube
+    {:using, data} = Beanstalk.use ctx[:pid], tube
+
     assert data == tube
+    Beanstalk.use ctx[:pid], now_tube
+  end
+
+  test "`reserved`", ctx do
+    str = "hello world"
+    {:inserted, put_id} = Beanstalk.put ctx[:pid], str
+    {:reserved, expected_id, {byte, expected_str}} = Beanstalk.reserve ctx[:pid]
+    assert put_id == expected_id
+    assert str == expected_str && byte == byte_size(str)
   end
 
   test "`ignore`", ctx do
-    tube = "new_tube"
-    ret = Beanstalk.ignore ctx[:pid], "default"
+    ret = Beanstalk.ignore ctx[:pid], ctx[:tube]
     assert ret == :not_ignored
 
-    ret = Beanstalk.ignore ctx[:pid], tube
-    assert elem(ret, 0) == :watching
-    {:watching, count1} = Beanstalk.watch ctx[:pid], tube
-    {:watching, count2} = Beanstalk.ignore ctx[:pid], tube
-    assert count1 - count2 == 1
+    tube = "new_tube"
+    {watch, count} = Beanstalk.ignore ctx[:pid], tube
+    assert watch == :watching && count == 1
   end
 
-  # test "`list_tubes`", ctx do
-  #   tubes = Beanstalk.list_tubes(ctx[:pid])
-  #   assert length(tubes) > 0
-  # end
+  test "`list_tubes`", ctx do
+    tubes = Beanstalk.list_tubes(ctx[:pid])
+    assert length(tubes) > 0
+  end
 
-  # test "`list_tubes_watched`", ctx do
-  #   used_tube = Beanstalk.list_tubes_watched ctx[:pid]
-  #   assert length(used_tube) == 1
-  #   assert hd(used_tube) == "default"
-  # end
+  test "`list_tubes_watched`", ctx do
+    used_tube = Beanstalk.list_tubes_watched ctx[:pid]
+    assert length(used_tube) == 1
+    assert hd(used_tube) == ctx[:tube]
 
-  # test "`list_tube_used`", ctx do
-  #   used_tubes = Beanstalk.list_tubes_watched ctx[:pid]
-  #   assert length(used_tubes) == 1
-  #   assert hd(used_tubes) == "default"
-  # end
+    tubes = ~w(tube1 tube2 tube3 tube4 tube5)
+    Enum.each tubes, &(Beanstalk.watch ctx[:pid], &1)
+    used_tube = Beanstalk.list_tubes_watched ctx[:pid]
+    assert length(used_tube) == 1 + length(tubes)
+    assert hd(used_tube) == ctx[:tube]
+  end
+
+  test "`list_tube_used`", ctx do
+    {:using, used_tube} = Beanstalk.list_tube_used ctx[:pid]
+    assert used_tube == ctx[:tube]
+
+    using_tube = "using_tube_foo"
+    Beanstalk.use ctx[:pid], using_tube
+    {:using, used_tube} = Beanstalk.list_tube_used ctx[:pid]
+    assert used_tube == using_tube
+  end
 
   test "`watch`", ctx do
     tube = "new_tube"
-    assert {:watching, count} = Beanstalk.watch ctx[:pid], tube
+    {:watching, count} = Beanstalk.watch ctx[:pid], tube
     assert count == 2
   end
 
@@ -70,9 +94,12 @@ defmodule BeanstalkTest do
     ret = Beanstalk.delete ctx[:pid], id
     assert ret == :deleted
 
+    ret = Beanstalk.delete ctx[:pid], id
+    assert ret == :not_found
+
     {:inserted, id} = Beanstalk.put ctx[:pid], "another job"
-    {:reserved, id, _} = Beanstalk.reserve ctx[:pid], 0
-    assert Beanstalk.delete(ctx[:pid], id) == :not_found
+    {:reserved, ^id, _} = Beanstalk.reserve ctx[:pid], 0
+    assert Beanstalk.delete(ctx[:pid], id) == :deleted
   end
 
 end

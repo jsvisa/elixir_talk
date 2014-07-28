@@ -45,7 +45,7 @@ defmodule Beanstalk do
   @spec put(pid, bitstring) :: result
   @spec put(pid, bitstring, Keyword) :: result
   def put(pid, data, opts \\ []) do
-    Beanstalk.Connect.call(pid, :put, data, opts)
+    Beanstalk.Connect.call(pid, {:put, data, opts})
   end
 
   @doc """
@@ -54,7 +54,7 @@ defmodule Beanstalk do
 
   @spec use(pid, bitstring) :: {:using, bitstring}
   def use(pid, tube) do
-    Beanstalk.Connect.call(pid, :use, tube)
+    Beanstalk.Connect.call(pid, {:use, tube})
   end
 
   @doc """
@@ -65,7 +65,7 @@ defmodule Beanstalk do
 
   @spec watch(pid, bitstring) :: {:watcing, non_neg_integer}
   def watch(pid, tube) do
-    Beanstalk.Connect.call(pid, :watch, tube)
+    Beanstalk.Connect.call(pid, {:watch, tube})
   end
 
   @doc """
@@ -73,7 +73,7 @@ defmodule Beanstalk do
   """
   @spec ignore(pid, bitstring) :: {:watching, non_neg_integer} | :not_ingored
   def ignore(pid, tube) do
-    Beanstalk.Connect.call(pid, :ignore, tube)
+    Beanstalk.Connect.call(pid, {:ignore, tube})
   end
 
   @doc """
@@ -85,7 +85,7 @@ defmodule Beanstalk do
 
   @spec delete(pid, non_neg_integer) :: :deleted | :not_found
   def delete(pid, id) do
-    Beanstalk.Connect.call(pid, :delete, id)
+    Beanstalk.Connect.call(pid, {:delete, id})
   end
 
   @doc """
@@ -99,7 +99,7 @@ defmodule Beanstalk do
 
   @spec touch(pid, non_neg_integer) :: :touched | :not_found
   def touch(pid, id) do
-    Beanstalk.Connect.call(pid, :touch, id)
+    Beanstalk.Connect.call(pid, {:touch, id})
   end
 
   @doc """
@@ -108,7 +108,7 @@ defmodule Beanstalk do
 
   @spec peek(pid, non_neg_integer) :: {:found, non_neg_integer} | :not_found
   def peek(pid, id) do
-    Beanstalk.Connect.call(pid, :peek, id)
+    Beanstalk.Connect.call(pid, {:peek, id})
   end
 
   @doc """
@@ -147,7 +147,7 @@ defmodule Beanstalk do
 
   @spec kick(pid, non_neg_integer) :: {:kicked, non_neg_integer}
   def kick(pid, bound) do
-    Beanstalk.Connect.call(pid, :kick, bound)
+    Beanstalk.Connect.call(pid, {:kick, bound})
   end
 
   @doc """
@@ -158,7 +158,7 @@ defmodule Beanstalk do
 
   @spec kick_job(pid, non_neg_integer) :: :kicked | :not_found
   def kick_job(pid, id) do
-    Beanstalk.Connect.call(pid, :kick_job, id)
+    Beanstalk.Connect.call(pid, {:kick_job, id})
   end
 
   @doc """
@@ -177,7 +177,7 @@ defmodule Beanstalk do
 
   @spec stats_job(pid, non_neg_integer) :: Keyword | :not_found
   def stats_job(pid, id) do
-    Beanstalk.Connect.call(pid, :stats_job, id)
+    Beanstalk.Connect.call(pid, {:stats_job, id})
   end
 
   @doc """
@@ -187,7 +187,7 @@ defmodule Beanstalk do
 
   @spec stats_tube(pid, bitstring) :: Keyword | :not_found
   def stats_tube(pid, tube) do
-    Beanstalk.Connect.call(pid, :stats_tube, tube)
+    Beanstalk.Connect.call(pid, {:stats_tube, tube})
   end
 
   @doc """
@@ -203,7 +203,7 @@ defmodule Beanstalk do
   Return the tube currently being used by the client.
   """
 
-  @spec list_tube_used(pid) :: {:using, bitstring}
+  @spec list_tube_used(pid) :: {:using, binary}
   def list_tube_used(pid) do
     Beanstalk.Connect.call(pid, :list_tube_used)
   end
@@ -223,7 +223,7 @@ defmodule Beanstalk do
 
   @spec reserve(pid) :: {:reserved, non_neg_integer, bitstring}
   def reserve(pid) do
-    Beanstalk.Connect.call_forever(pid, :reserve)
+    Beanstalk.Connect.call(pid, :reserve, :infinity)
   end
 
   @doc """
@@ -232,7 +232,7 @@ defmodule Beanstalk do
 
   @spec reserve(pid, non_neg_integer) :: {:reserved, non_neg_integer, bitstring} | :deadline_soon | :timed_out
   def reserve(pid, timeout) do
-    Beanstalk.Connect.call_forever(pid, :reserve_with_timeout, timeout)
+    Beanstalk.Connect.call(pid, {:reserve_with_timeout, timeout}, :infinity)
   end
 
   @doc """
@@ -244,7 +244,7 @@ defmodule Beanstalk do
   @spec bury(pid, non_neg_integer) :: :buried | :not_found
   @spec bury(pid, non_neg_integer, non_neg_integer) :: :buried | :not_found
   def bury(pid, id, pri \\ 0) do
-    Beanstalk.Connect.call(pid, :bury, id, pri)
+    Beanstalk.Connect.call(pid, {:bury, id, pri})
   end
 
   @doc """
@@ -253,7 +253,7 @@ defmodule Beanstalk do
 
   @spec pause_tube(pid, bitstring, non_neg_integer) :: :paused | :not_found
   def pause_tube(pid, tube, delay) do
-    Beanstalk.Connect.call(pid, :pause_tube, tube, delay)
+    Beanstalk.Connect.call(pid, {:pause_tube, tube, delay})
   end
 
   @doc """
@@ -269,7 +269,7 @@ defmodule Beanstalk do
   @spec release(pid, non_neg_integer) :: :released | :buried | :not_found
   @spec release(pid, non_neg_integer, Keyword) :: :released | :buried | :not_found
   def release(pid, id, opts \\ []) do
-    Beanstalk.Connect.call(pid, :release, id, opts)
+    Beanstalk.Connect.call(pid, {:release, id, opts})
   end
 
 end
