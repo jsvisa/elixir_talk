@@ -1,4 +1,4 @@
-defmodule Beanstalk.Connect do
+defmodule ElixirTalk.Connect do
   use GenServer
 
   def start_link(args) do
