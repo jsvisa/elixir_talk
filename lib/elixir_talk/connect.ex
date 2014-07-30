@@ -135,7 +135,7 @@ defmodule ElixirTalk.Connect do
     cond do
       Regex.match?(~r/^\d{1,}$/, str) ->
         String.to_integer(str)
-      Regex.match?(~r/^\d{1,}\.\d{1,}/, str) ->
+      Regex.match?(~r/^\d{1,}\.\d{1,}$/, str) ->
         String.to_float(str)
       true ->
         str
