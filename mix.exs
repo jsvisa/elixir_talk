@@ -1,4 +1,4 @@
-defmodule Beanstalk.Mixfile do
+defmodule ElixirTalk.Mixfile do
   use Mix.Project
 
   def project do

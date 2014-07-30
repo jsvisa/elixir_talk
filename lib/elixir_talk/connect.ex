@@ -1,4 +1,4 @@
-defmodule Beanstalk.Connect do
+defmodule ElixirTalk.Connect do
   use GenServer
 
   def start_link(args) do
@@ -9,16 +9,8 @@ defmodule Beanstalk.Connect do
     :gen_server.cast(pid, :stop)
   end
 
-  def call(pid, oper, data \\ []) do
-    :gen_server.call(pid, {oper, data})
-  end
-
-  def call(pid, oper, data, opts) do
-    :gen_server.call(pid, {oper, data, opts})
-  end
-
-  def call_forever(pid, oper, data \\ []) do
-    :gen_server.call(pid, {oper, data}, :infinity)
+  def call(pid, oper_with_data, timeout \\ 5_000) do
+    :gen_server.call(pid, oper_with_data, timeout)
   end
 
   def init([host, port, timeout]) do
@@ -64,12 +56,23 @@ defmodule Beanstalk.Connect do
     cmd = String.replace("#{cmd}", "_", "-")
     bin_data = cond do
       data == [] -> "#{cmd}\r\n"
-      true -> "#{cmd} #{data}\r\n"
+      true       -> "#{cmd} #{data}\r\n"
     end
 
     :gen_tcp.send(socket, bin_data)
     {:ok, result} = :gen_tcp.recv(socket, 0)
     {:reply, get_result(result), state}
+  end
+
+  def handle_call(cmd, _from, [socket: socket] = state) do
+    cmd = Atom.to_string(cmd) |> String.replace("_", "-")
+    :gen_tcp.send(socket, "#{cmd}\r\n")
+    {:ok, result} = :gen_tcp.recv(socket, 0)
+    {:reply, get_result(result), state}
+  end
+
+  def handle_call(_msg, _from, state) do
+    {:reply, :ok, state}
   end
 
   def handle_cast(:stop, state) do
@@ -86,21 +89,25 @@ defmodule Beanstalk.Connect do
   ######################
 
   defp get_result(result) do
-    [h | t] = String.split(result, " ", global: false)
-    t = List.to_string(t)
-    # kick out the '\r\n
-    str = String.replace(t, "\r\n", "")
-    cond do
-      Regex.match?(~r/^\d{1,}$/, str) -> do_result(h, String.to_integer(str))
-      true -> do_result(h, t)
+    case String.contains?(result, " ") do
+      true ->
+        [h, tail] = String.split(result, " ", parts: 2, trim: true)
+        # kick out the terminated '\r\n'
+        str = String.slice(tail, 0..-3)
+        case Regex.match?(~r/^\d{1,}$/, str) do
+          true  -> do_result(h, String.to_integer(str))
+          false -> do_result(h, str)
+        end
+      false ->
+        do_result(String.slice(result, 0..-3))
     end
   end
 
-  defp do_result(res, "") do
-    str_to_atom String.replace(res, "\r\n", "")
+  defp do_result(result) do
+    str_to_atom(result)
   end
   defp do_result("USING", data) do
-    {str_to_atom("USING"), String.replace(data, "\r\n", "")}
+    {str_to_atom("USING"), data}
   end
   defp do_result(res, num) when is_integer(num) do
     {str_to_atom(res), num}
@@ -112,10 +119,11 @@ defmodule Beanstalk.Connect do
       do_tubes(tail)
     end
   end
-  defp do_result(res, tail) do
-    # <id> <bytes>\r\n<data>\r\n
-    [id, data] = String.split(tail, "\r\n", parts: 3, trim: true)
-    {str_to_atom(res), String.to_integer(id), data}
+  defp do_result(res = "RESERVED", tail) do
+    # handle RESERVE
+    # <id> <bytes>\r\n<data>
+    [id, byte, data] = String.split(tail, ~r/ |\r\n/, parts: 3)
+    {str_to_atom(res), String.to_integer(id), {String.to_integer(byte), data}}
   end
 
   defp str_to_atom(str) do
@@ -127,7 +135,7 @@ defmodule Beanstalk.Connect do
     cond do
       Regex.match?(~r/^\d{1,}$/, str) ->
         String.to_integer(str)
-      Regex.match?(~r/^\d{1,}\.\d{1,}/, str) ->
+      Regex.match?(~r/^\d{1,}\.\d{1,}$/, str) ->
         String.to_float(str)
       true ->
         str
@@ -142,9 +150,9 @@ defmodule Beanstalk.Connect do
   defp do_stats(tail) do
     origin = String.split(tail, "\n")
     str_to_keyword = fn(str) ->
-      [a, b] = String.split(str, ":", parts: 2)
+      [a, b] = String.split(str, ": ", parts: 2)
       {str_to_atom(a), str_to_num(b)}
     end
-    Enum.filter_map(origin, &String.contains?(&1, ":"), str_to_keyword)
+    Enum.filter_map(origin, &(String.contains?(&1, ":")), str_to_keyword)
   end
 end
