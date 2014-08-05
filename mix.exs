@@ -2,7 +2,7 @@ defmodule ElixirTalk.Mixfile do
   use Mix.Project
 
   def project do
-    [ app: :beanstalk,
+    [ app: :elixir_talk,
       version: "0.0.1",
       elixir: "~> 0.14.3",
       deps: deps ]
