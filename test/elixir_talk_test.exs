@@ -2,7 +2,7 @@ defmodule ElixirTalkTest do
   use ExUnit.Case
 
   setup do
-    {:ok, pid} = ElixirTalk.connect "192.168.10.61"
+    {:ok, pid} = ElixirTalk.connect '192.168.33.10', 14711
 
     {m, s, ms} = :os.timestamp
     tube = "ElixirTalk_#{m}_#{s}_#{ms}"
@@ -12,6 +12,12 @@ defmodule ElixirTalkTest do
 
     on_exit fn -> ElixirTalk.quit(pid) end
     {:ok, [tube: tube, pid: pid]}
+  end
+
+  test "`connect`", ctx do
+    {:ok, pid} = ElixirTalk.connect 'mp.mydomain.com', 14711
+
+    on_exit fn -> ElixirTalk.quit(pid) end
   end
 
   test "`put`", ctx do

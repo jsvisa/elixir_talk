@@ -14,7 +14,6 @@ defmodule ElixirTalk.Connect do
   end
 
   def init([host, port, timeout]) do
-    {:ok, host} = :inet.parse_address(String.to_char_list host)
     case :gen_tcp.connect(host, port, [:binary, {:packet, 0}, {:active, false}], timeout) do
       {:ok, socket} ->
         {:ok, [socket: socket]}

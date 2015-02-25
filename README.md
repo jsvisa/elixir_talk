@@ -18,8 +18,8 @@ You'll need **beanstalkd** listening at the host: `10.1.1.5`, and port: `14711`,
 Start the interactive shell and run the `ElixirTalk.connect` method to run it:
 
     iex -S mix
-    iex(1)> {:ok, pid} = ElixirTalk.connect("10.1.1.5", 14711)
-If you leave out the two arguments, `"127.0.0.1"` and `11300` are the default value, also there is a `timeout` parameter
+    iex(1)> {:ok, pid} = ElixirTalk.connect('10.1.1.5', 14711)
+If you leave out the two arguments, `'127.0.0.1'` and `11300` are the default value, also there is a `timeout` parameter
 which determines how long, **in millliseconds**, the socket will wait for **beanstalkd** to respond to its' initial
 connection, default to `:infinity`.
 
