@@ -92,13 +92,13 @@ defmodule ElixirTalk.Connect do
       true ->
         [h, tail] = String.split(result, " ", parts: 2, trim: true)
         # kick out the terminated '\r\n'
-        str = String.slice(tail, 0..-3)
+        str = String.slice(tail, 0..-2)
         case Regex.match?(~r/^\d{1,}$/, str) do
           true  -> do_result(h, String.to_integer(str))
           false -> do_result(h, str)
         end
       false ->
-        do_result(String.slice(result, 0..-3))
+        do_result(String.slice(result, 0..-2))
     end
   end
 
