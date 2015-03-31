@@ -1,6 +1,6 @@
-.PHONY: all test clean
+.PHONY: all test
 
-all: compile
+all: deps compile
 
 deps:
 	mix deps.get
@@ -14,10 +14,3 @@ test:
 clean:
 	mix clean
 
-generate:
-	mix relex.assemble
-
-rel: deps compile generate
-
-relclean:
-	rm -rf rel/reverse
