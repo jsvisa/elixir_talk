@@ -1,4 +1,4 @@
-# Beanstalk
+# ElixirTalk
 
 ## Overview
 `ElixirTalk` is an Elixir client for [beanstalkd](http://kr.github.com/beanstalkd/).
@@ -153,4 +153,11 @@ Finally, there's an abundant amount of server-level statistics accessible via th
      "rusage-stime": 2312.522858, uptime: 454596, "binlog-oldest-index": 0,
      "binlog-current-index": 0, "binlog-records-migrated": 0,
      "binlog-records-written": 0, "binlog-max-size": 10485760]
+
+
+## Test
+
+If you want to run the TestCase, you set the correct Beanstalkd IP and Port
+in [test/elixir_talk_test.exs]("http://www.github.com/jsvisa/elixit_talk/test/elixir_talk_test.exs"),
+also you should set a hostname `my.beanstalkd.com` with the provided ip in */etc/hosts*
 
