@@ -91,14 +91,15 @@ defmodule ElixirTalk.Connect do
     case String.contains?(result, " ") do
       true ->
         [h, tail] = String.split(result, " ", parts: 2, trim: true)
+
         # kick out the terminated '\r\n'
-        str = String.slice(tail, 0..-3)
+        str = str_slice(tail)
         case Regex.match?(~r/^\d{1,}$/, str) do
           true  -> do_result(h, String.to_integer(str))
           false -> do_result(h, str)
         end
       false ->
-        do_result(String.slice(result, 0..-3))
+        do_result(str_slice(result))
     end
   end
 
@@ -129,7 +130,7 @@ defmodule ElixirTalk.Connect do
     String.downcase(str) |> String.to_atom
   end
 
-  # when str isn't a number, return itself
+  # If str isn't a number, return itself
   defp str_to_num(str) do
     cond do
       Regex.match?(~r/^\d{1,}$/, str) ->
@@ -139,6 +140,13 @@ defmodule ElixirTalk.Connect do
       true ->
         str
     end
+  end
+
+  # When in Elixir 1.0.3, String.slice/2 works on graphemes and
+  # '\r\n' is considered a single grapheme.
+  # see more here https://github.com/elixir-lang/elixir/issues/3224
+  defp str_slice(str) do
+    :erlang.binary_part(str, 0, byte_size(str) - byte_size("\r\n"))
   end
 
   defp do_tubes(tail) do
