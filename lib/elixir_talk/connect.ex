@@ -28,7 +28,7 @@ defmodule ElixirTalk.Connect do
     pri   = Keyword.get(opts, :pri, 0)
     delay = Keyword.get(opts, :delay, 0)
     ttr   = Keyword.get(opts, :ttr, 60)
-    bytes = String.length(data)
+    bytes = byte_size(data)
     bin_data = "put #{pri} #{delay} #{ttr} #{bytes}\r\n#{data}\r\n"
     :gen_tcp.send(socket, bin_data)
     {:ok, result} = :gen_tcp.recv(socket, 0)
