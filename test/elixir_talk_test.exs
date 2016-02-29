@@ -36,6 +36,11 @@ defmodule ElixirTalkTest do
     for id <- [id1, id2, id3, id4], do: ElixirTalk.delete(ctx[:pid], id)
   end
 
+  test "`put` unicode", ctx do
+    {:inserted, id} = ElixirTalk.put ctx[:pid], "hełło"
+    assert is_integer(id)
+  end
+
   test "`use`", ctx do
     {:using, now_tube} = ElixirTalk.list_tube_used(ctx[:pid])
     tube = "not_default"
