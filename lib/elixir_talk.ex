@@ -1,4 +1,5 @@
 defmodule ElixirTalk do
+  alias ElixirTalk.Connect
 
   @moduledoc """
   ElixirTalk - A beanstalkd client coding with Elixir
@@ -15,7 +16,7 @@ defmodule ElixirTalk do
 
   @spec connect(:inet.ip_address | :inet.hostname, integer, integer) :: {:ok, pid} | {:error, term}
   def connect(host \\ '127.0.0.1', port \\ 11300, timeout \\ :infinity) do
-    ElixirTalk.Connect.start_link([host, port, timeout])
+    Connect.start_link([host, port, timeout])
   end
 
   @doc """
@@ -23,7 +24,7 @@ defmodule ElixirTalk do
   """
   @spec quit(pid) :: :ok
   def quit(pid) do
-    ElixirTalk.Connect.quit(pid)
+    Connect.quit(pid)
   end
 
   @doc """
@@ -45,7 +46,7 @@ defmodule ElixirTalk do
   @spec put(pid, bitstring) :: result
   @spec put(pid, bitstring, Keyword) :: result
   def put(pid, data, opts \\ []) do
-    ElixirTalk.Connect.call(pid, {:put, data, opts})
+    Connect.call(pid, {:put, data, opts})
   end
 
   @doc """
@@ -54,7 +55,7 @@ defmodule ElixirTalk do
 
   @spec use(pid, bitstring) :: {:using, bitstring}
   def use(pid, tube) do
-    ElixirTalk.Connect.call(pid, {:use, tube})
+    Connect.call(pid, {:use, tube})
   end
 
   @doc """
@@ -65,7 +66,7 @@ defmodule ElixirTalk do
 
   @spec watch(pid, bitstring) :: {:watcing, non_neg_integer}
   def watch(pid, tube) do
-    ElixirTalk.Connect.call(pid, {:watch, tube})
+    Connect.call(pid, {:watch, tube})
   end
 
   @doc """
@@ -73,7 +74,7 @@ defmodule ElixirTalk do
   """
   @spec ignore(pid, bitstring) :: {:watching, non_neg_integer} | :not_ingored
   def ignore(pid, tube) do
-    ElixirTalk.Connect.call(pid, {:ignore, tube})
+    Connect.call(pid, {:ignore, tube})
   end
 
   @doc """
@@ -85,7 +86,7 @@ defmodule ElixirTalk do
 
   @spec delete(pid, non_neg_integer) :: :deleted | :not_found
   def delete(pid, id) do
-    ElixirTalk.Connect.call(pid, {:delete, id})
+    Connect.call(pid, {:delete, id})
   end
 
   @doc """
@@ -99,7 +100,7 @@ defmodule ElixirTalk do
 
   @spec touch(pid, non_neg_integer) :: :touched | :not_found
   def touch(pid, id) do
-    ElixirTalk.Connect.call(pid, {:touch, id})
+    Connect.call(pid, {:touch, id})
   end
 
   @doc """
@@ -108,7 +109,7 @@ defmodule ElixirTalk do
 
   @spec peek(pid, non_neg_integer) :: {:found, non_neg_integer} | :not_found
   def peek(pid, id) do
-    ElixirTalk.Connect.call(pid, {:peek, id})
+    Connect.call(pid, {:peek, id})
   end
 
   @doc """
@@ -117,7 +118,7 @@ defmodule ElixirTalk do
 
   @spec peek_ready(pid) :: {:found, non_neg_integer} | :not_found
   def peek_ready(pid) do
-    ElixirTalk.Connect.call(pid, :peek_ready)
+    Connect.call(pid, :peek_ready)
   end
 
   @doc """
@@ -126,7 +127,7 @@ defmodule ElixirTalk do
 
   @spec peek_delayed(pid) :: {:found, non_neg_integer} | :not_found
   def peek_delayed(pid) do
-    ElixirTalk.Connect.call(pid, :peek_delayed)
+    Connect.call(pid, :peek_delayed)
   end
 
   @doc """
@@ -135,7 +136,7 @@ defmodule ElixirTalk do
 
   @spec peek_buried(pid) :: {:found, non_neg_integer} | :not_found
   def peek_buried(pid) do
-    ElixirTalk.Connect.call(pid, :peek_buried)
+    Connect.call(pid, :peek_buried)
   end
 
   @doc """
@@ -147,7 +148,7 @@ defmodule ElixirTalk do
 
   @spec kick(pid, non_neg_integer) :: {:kicked, non_neg_integer}
   def kick(pid, bound) do
-    ElixirTalk.Connect.call(pid, {:kick, bound})
+    Connect.call(pid, {:kick, bound})
   end
 
   @doc """
@@ -158,7 +159,7 @@ defmodule ElixirTalk do
 
   @spec kick_job(pid, non_neg_integer) :: :kicked | :not_found
   def kick_job(pid, id) do
-    ElixirTalk.Connect.call(pid, {:kick_job, id})
+    Connect.call(pid, {:kick_job, id})
   end
 
   @doc """
@@ -167,7 +168,7 @@ defmodule ElixirTalk do
 
   @spec stats(pid) :: Keyword
   def stats(pid) do
-    ElixirTalk.Connect.call(pid, :stats)
+    Connect.call(pid, :stats)
   end
 
   @doc """
@@ -177,7 +178,7 @@ defmodule ElixirTalk do
 
   @spec stats_job(pid, non_neg_integer) :: Keyword | :not_found
   def stats_job(pid, id) do
-    ElixirTalk.Connect.call(pid, {:stats_job, id})
+    Connect.call(pid, {:stats_job, id})
   end
 
   @doc """
@@ -187,7 +188,7 @@ defmodule ElixirTalk do
 
   @spec stats_tube(pid, bitstring) :: Keyword | :not_found
   def stats_tube(pid, tube) do
-    ElixirTalk.Connect.call(pid, {:stats_tube, tube})
+    Connect.call(pid, {:stats_tube, tube})
   end
 
   @doc """
@@ -196,7 +197,7 @@ defmodule ElixirTalk do
 
   @spec list_tubes(pid) :: List
   def list_tubes(pid) do
-    ElixirTalk.Connect.call(pid, :list_tubes)
+    Connect.call(pid, :list_tubes)
   end
 
   @doc """
@@ -205,7 +206,7 @@ defmodule ElixirTalk do
 
   @spec list_tube_used(pid) :: {:using, binary}
   def list_tube_used(pid) do
-    ElixirTalk.Connect.call(pid, :list_tube_used)
+    Connect.call(pid, :list_tube_used)
   end
 
   @doc """
@@ -214,7 +215,7 @@ defmodule ElixirTalk do
 
   @spec list_tubes_watched(pid) :: List
   def list_tubes_watched(pid) do
-    ElixirTalk.Connect.call(pid, :list_tubes_watched)
+    Connect.call(pid, :list_tubes_watched)
   end
 
   @doc """
@@ -223,7 +224,7 @@ defmodule ElixirTalk do
 
   @spec reserve(pid) :: {:reserved, non_neg_integer, bitstring}
   def reserve(pid) do
-    ElixirTalk.Connect.call(pid, :reserve, :infinity)
+    Connect.call(pid, :reserve, :infinity)
   end
 
   @doc """
@@ -234,7 +235,7 @@ defmodule ElixirTalk do
                                          :deadline_soon |
                                          :timed_out
   def reserve(pid, timeout) do
-    ElixirTalk.Connect.call(pid, {:reserve_with_timeout, timeout}, :infinity)
+    Connect.call(pid, {:reserve_with_timeout, timeout}, :infinity)
   end
 
   @doc """
@@ -246,7 +247,7 @@ defmodule ElixirTalk do
   @spec bury(pid, non_neg_integer) :: :buried | :not_found
   @spec bury(pid, non_neg_integer, non_neg_integer) :: :buried | :not_found
   def bury(pid, id, pri \\ 0) do
-    ElixirTalk.Connect.call(pid, {:bury, id, pri})
+    Connect.call(pid, {:bury, id, pri})
   end
 
   @doc """
@@ -255,7 +256,7 @@ defmodule ElixirTalk do
 
   @spec pause_tube(pid, bitstring, non_neg_integer) :: :paused | :not_found
   def pause_tube(pid, tube, delay) do
-    ElixirTalk.Connect.call(pid, {:pause_tube, tube, delay})
+    Connect.call(pid, {:pause_tube, tube, delay})
   end
 
   @doc """
@@ -271,7 +272,7 @@ defmodule ElixirTalk do
   @spec release(pid, non_neg_integer) :: :released | :buried | :not_found
   @spec release(pid, non_neg_integer, Keyword) :: :released | :buried | :not_found
   def release(pid, id, opts \\ []) do
-    ElixirTalk.Connect.call(pid, {:release, id, opts})
+    Connect.call(pid, {:release, id, opts})
   end
 
 end
