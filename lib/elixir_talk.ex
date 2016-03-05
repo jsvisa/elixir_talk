@@ -7,7 +7,11 @@ defmodule ElixirTalk do
   from
   Copyright 2014-2016 by jsvisa(delweng@gmail.com)
   """
-  @type result :: {:inserted, non_neg_integer} | {:buried, non_neg_integer} | {:expected_crlf} | :job_to_big | :darining
+  @type result :: {:inserted, non_neg_integer} |
+                  {:buried, non_neg_integer} |
+                  {:expected_crlf} |
+                  :job_too_big |
+                  :darining
   @vsn 1.0
 
   @doc """
@@ -31,20 +35,23 @@ defmodule ElixirTalk do
   Put a job to the current tube.
 
   The opts can be any combination of
-  `:pri`    : an integer < 2**32. Jobs with smaller priority values will be
-              scheduled before jobs with larger priorities. The most urgent priority is 0;
-              the least urgent priority is 4,294,967,295.
-  `:delay`  : an integer number of seconds to wait before putting the job in
-              the ready queue. The job will be in the "delayed" state during this time.
-  `:ttr`    : time to run -- is an integer number of seconds to allow a worker
-              to run this job. This time is counted from the moment a worker reserves
-              this job. If the worker does not delete, release, or bury the job within
-              `:ttr` seconds, the job will time out and the server will release the job.
-              The minimum ttr is 1. If the client sends 0, the server will silently
-              increase the ttr to 1.
+
+    * `:pri` - an integer < 2**32. Jobs with smaller priority values will be
+      scheduled before jobs with larger priorities. The most urgent priority is 0;
+      the least urgent priority is 4,294,967,295.
+
+    * `:delay` - an integer number of seconds to wait before putting the job in
+      the ready queue. The job will be in the "delayed" state during this time.
+
+    * `:ttr` -time to run -- is an integer number of seconds to allow a worker
+      to run this job. This time is counted from the moment a worker reserves
+      this job. If the worker does not delete, release, or bury the job within
+      `:ttr` seconds, the job will time out and the server will release the job.
+      The minimum ttr is 1. If the client sends 0, the server will silently
+      increase the ttr to 1.
   """
-  @spec put(pid, bitstring) :: result
-  @spec put(pid, bitstring, Keyword) :: result
+  @spec put(pid, String.t) :: result
+  @spec put(pid, String.t, Keyword.t) :: result
   def put(pid, data, opts \\ []) do
     Connect.call(pid, {:put, data, opts})
   end
@@ -53,7 +60,7 @@ defmodule ElixirTalk do
   Use a tube to `put` jobs.
   """
 
-  @spec use(pid, bitstring) :: {:using, bitstring}
+  @spec use(pid, String.t) :: {:using, String.t}
   def use(pid, tube) do
     Connect.call(pid, {:use, tube})
   end
@@ -64,7 +71,7 @@ defmodule ElixirTalk do
   watch list.
   """
 
-  @spec watch(pid, bitstring) :: {:watcing, non_neg_integer}
+  @spec watch(pid, String.t) :: {:watcing, non_neg_integer}
   def watch(pid, tube) do
     Connect.call(pid, {:watch, tube})
   end
@@ -72,7 +79,7 @@ defmodule ElixirTalk do
   @doc """
   Remove the named tube from the watch list for the current connection.
   """
-  @spec ignore(pid, bitstring) :: {:watching, non_neg_integer} | :not_ingored
+  @spec ignore(pid, String.t) :: {:watching, non_neg_integer} | :not_ingored
   def ignore(pid, tube) do
     Connect.call(pid, {:ignore, tube})
   end
@@ -166,7 +173,7 @@ defmodule ElixirTalk do
   Give statistical information about the system as a whole.
   """
 
-  @spec stats(pid) :: Keyword
+  @spec stats(pid) :: Keyword.t
   def stats(pid) do
     Connect.call(pid, :stats)
   end
@@ -176,7 +183,7 @@ defmodule ElixirTalk do
   it exists.
   """
 
-  @spec stats_job(pid, non_neg_integer) :: Keyword | :not_found
+  @spec stats_job(pid, non_neg_integer) :: Keyword.t | :not_found
   def stats_job(pid, id) do
     Connect.call(pid, {:stats_job, id})
   end
@@ -186,7 +193,7 @@ defmodule ElixirTalk do
   if it exists.
   """
 
-  @spec stats_tube(pid, bitstring) :: Keyword | :not_found
+  @spec stats_tube(pid, String.t) :: Keyword.t | :not_found
   def stats_tube(pid, tube) do
     Connect.call(pid, {:stats_tube, tube})
   end
@@ -195,7 +202,7 @@ defmodule ElixirTalk do
   Return a list of all existing tubes in the server.
   """
 
-  @spec list_tubes(pid) :: List
+  @spec list_tubes(pid) :: List.t
   def list_tubes(pid) do
     Connect.call(pid, :list_tubes)
   end
@@ -204,7 +211,7 @@ defmodule ElixirTalk do
   Return the tube currently being used by the client.
   """
 
-  @spec list_tube_used(pid) :: {:using, binary}
+  @spec list_tube_used(pid) :: {:using, String.t}
   def list_tube_used(pid) do
     Connect.call(pid, :list_tube_used)
   end
@@ -213,7 +220,7 @@ defmodule ElixirTalk do
   Return the tubes currently being watched by the client.
   """
 
-  @spec list_tubes_watched(pid) :: List
+  @spec list_tubes_watched(pid) :: List.t
   def list_tubes_watched(pid) do
     Connect.call(pid, :list_tubes_watched)
   end
@@ -222,7 +229,7 @@ defmodule ElixirTalk do
   Get a job from the currently watched tubes.
   """
 
-  @spec reserve(pid) :: {:reserved, non_neg_integer, bitstring}
+  @spec reserve(pid) :: {:reserved, non_neg_integer, String.t}
   def reserve(pid) do
     Connect.call(pid, :reserve, :infinity)
   end
@@ -231,9 +238,10 @@ defmodule ElixirTalk do
   Get a job from the currently watched tubes with timeout of seconds.
   """
 
-  @spec reserve(pid, non_neg_integer) :: {:reserved, non_neg_integer, {non_neg_integer, binary}} |
-                                         :deadline_soon |
-                                         :timed_out
+  @spec reserve(pid, non_neg_integer) ::
+    {:reserved, non_neg_integer, {non_neg_integer, String.t}} |
+    :deadline_soon |
+    :timed_out
   def reserve(pid, timeout) do
     Connect.call(pid, {:reserve_with_timeout, timeout}, :infinity)
   end
@@ -254,7 +262,7 @@ defmodule ElixirTalk do
   Delay any new job being reserved for a given time.
   """
 
-  @spec pause_tube(pid, bitstring, non_neg_integer) :: :paused | :not_found
+  @spec pause_tube(pid, String.t, non_neg_integer) :: :paused | :not_found
   def pause_tube(pid, tube, delay) do
     Connect.call(pid, {:pause_tube, tube, delay})
   end
@@ -264,9 +272,11 @@ defmodule ElixirTalk do
   to be run by any client. It is normally used when the job fails because of a transitory error.
 
   The opts can any combination of
-  `:pri`    : a new priority to assign to the job;
-  `:delay`  : an integer number of seconds to wait before putting the job back in the ready queue.
-              The job will be in the "delayed" state during this time.
+
+  * `:pri` - a new priority to assign to the job;
+
+  * `:delay` - an integer number of seconds to wait before putting the job back in the ready queue.
+    The job will be in the "delayed" state during this time.
   """
 
   @spec release(pid, non_neg_integer) :: :released | :buried | :not_found
