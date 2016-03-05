@@ -5,7 +5,7 @@ defmodule ElixirTalk do
   ElixirTalk - A beanstalkd client coding with Elixir
 
   from
-  Copyright 2014 by jsvisa(delweng@gmail.com)
+  Copyright 2014-2016 by jsvisa(delweng@gmail.com)
   """
   @type result :: {:inserted, non_neg_integer} | {:buried, non_neg_integer} | {:expected_crlf} | :job_to_big | :darining
   @vsn 1.0
