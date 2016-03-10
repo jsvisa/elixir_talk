@@ -31,7 +31,7 @@ defmodule ElixirTalk.Connect do
     bytes = byte_size(data)
     bin_data = "put #{pri} #{delay} #{ttr} #{bytes}\r\n#{data}\r\n"
     :gen_tcp.send(socket, bin_data)
-    {:ok, result} = :gen_tcp.recv(socket, 0)
+    {:ok, result} = get_tcp_response(socket)
     {:reply, get_result(result), state}
   end
 
@@ -40,14 +40,14 @@ defmodule ElixirTalk.Connect do
     delay = Keyword.get(opts, :delay, 0)
     bin_data = "release #{id} #{pri} #{delay}\r\n"
     :gen_tcp.send(socket, bin_data)
-    {:ok, result} = :gen_tcp.recv(socket, 0)
+    {:ok, result} = get_tcp_response(socket)
     {:reply, get_result(result), state}
   end
 
   def handle_call({cmd, data, opt}, _from, [socket: socket] = state) do
     bin_data = String.replace("#{cmd}", "_", "-") <> " #{data} #{opt}\r\n"
     :gen_tcp.send(socket, bin_data)
-    {:ok, result} = :gen_tcp.recv(socket, 0)
+    {:ok, result} = get_tcp_response(socket)
     {:reply, get_result(result), state}
   end
 
@@ -59,14 +59,14 @@ defmodule ElixirTalk.Connect do
     end
 
     :gen_tcp.send(socket, bin_data)
-    {:ok, result} = :gen_tcp.recv(socket, 0)
+    {:ok, result} = get_tcp_response(socket)
     {:reply, get_result(result), state}
   end
 
   def handle_call(cmd, _from, [socket: socket] = state) do
     cmd = Atom.to_string(cmd) |> String.replace("_", "-")
     :gen_tcp.send(socket, "#{cmd}\r\n")
-    {:ok, result} = :gen_tcp.recv(socket, 0)
+    {:ok, result} = get_tcp_response(socket)
     {:reply, get_result(result), state}
   end
 
@@ -86,7 +86,14 @@ defmodule ElixirTalk.Connect do
   ######################
   ## Privacy Apis
   ######################
-
+  defp get_tcp_response(socket, acc \\ "") do
+    {:ok, result} = :gen_tcp.recv(socket, 0)
+    case String.ends_with?(result, "\r\n") do
+      true -> {:ok, acc <> result}
+      _ -> get_tcp_response(socket, acc <> result)
+    end
+  end
+  
   defp get_result(result) do
     case String.contains?(result, " ") do
       true ->
