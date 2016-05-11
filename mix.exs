@@ -4,7 +4,7 @@ defmodule ElixirTalk.Mixfile do
   def project do
     [ app: :elixir_talk,
       version: "1.0.2",
-      elixir: "~> 1.0.0",
+      elixir: ">= 1.0.0 and < 1.3.0",
       description: description,
       package: package,
       deps: deps ]
