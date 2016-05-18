@@ -1,5 +1,5 @@
 defmodule ElixirTalk.Connect do
-  use GenServer
+  use Connection
   require Logger
 
   import ElixirTalk.Protocol
@@ -11,22 +11,21 @@ defmodule ElixirTalk.Connect do
               from: nil,
               connect_timeout: 5_000,
               recv_timeout: 5_000,
-              reconnect: false,
-              reconnect_sleep: 0
+              reconnect: true
   end
 
   @sock_opts [mode: :binary, packet: 0, active: false, reuseaddr: true]
 
   def start_link(opts) do
-    GenServer.start_link(__MODULE__, opts, [])
+    Connection.start_link(__MODULE__, opts, [])
   end
 
   def quit(pid) do
-    GenServer.cast(pid, :stop)
+    Connection.cast(pid, :stop)
   end
 
   def call(pid, oper_with_data, timeout \\ 5_000) do
-    GenServer.call(pid, oper_with_data, timeout)
+    Connection.call(pid, oper_with_data, timeout)
   end
 
   def init(opts) do
@@ -38,14 +37,49 @@ defmodule ElixirTalk.Connect do
     recv_timeout    = Keyword.get(opts, :recv_timeout, 5_000)
     connect_timeout = Keyword.get(opts, :connect_timeout, 5_000)
 
+    reconnect = Keyword.get(opts, :reconnect, true)
+
     state = %State{host: host,
                    port: port,
                    recv_timeout: recv_timeout,
-                   connect_timeout: connect_timeout}
-    case connect(state) do
-      {:ok, conn}      -> {:ok, %{state | conn: conn}}
-      {:error, reason} -> {:stop, {:shutdown, reason}}
+                   connect_timeout: connect_timeout,
+                   reconnect: reconnect}
+
+    {:connect, :init, state}
+  end
+
+  def connect(_, %State{conn: nil, host: host, port: port, connect_timeout: timeout, reconnect: reconnect}=state) do
+    _ = Logger.info "connect with #{host}: #{port}"
+    case :gen_tcp.connect(host, port, @sock_opts, timeout) do
+      {:ok, conn} ->
+        {:ok, %{state | conn: conn}}
+      {:error, error} ->
+        if reconnect do
+          {:backoff, 1000, state} # Retry connection every second
+        else
+          {:stop, error, state}
+        end
     end
+  end
+
+  def disconnect(info, %State{conn: conn, reconnect: reconnect}=state) do
+    :ok = :gen_tcp.close(conn)
+    case info do
+      {:close, from} ->
+        Connection.reply(from, :ok)
+      {:error, _} ->
+        # Socket was likely closed on the other end
+        :noop
+    end
+    if reconnect do
+      {:connect, :reconnect, %{state | conn: nil}}
+    else
+      {:noconnect, %{state | conn: nil}}
+    end
+  end
+
+  def handle_call(_, _, %State{conn: nil}=state) do
+    {:reply, :closed, state}
   end
 
   def handle_call({:put, data, opts}, _from, state) do
@@ -90,6 +124,10 @@ defmodule ElixirTalk.Connect do
     {:stop, :normal, state}
   end
 
+  def terminate(_, %State{conn: nil}) do
+    :ok
+  end
+
   def terminate(_, %State{conn: conn}) do
     :gen_tcp.close(conn)
     :ok
@@ -99,28 +137,19 @@ defmodule ElixirTalk.Connect do
   ## Privacy Apis
   ######################
 
-  defp connect(%State{host: host, port: port, connect_timeout: timeout}) do
-    Logger.info "connect with #{host}: #{port}"
-    :gen_tcp.connect(host, port, @sock_opts, timeout)
-  end
-
-  defp send_msg(_msg, %State{conn: nil, reconnect: false}=state) do
-    {:reply, {:error, :noconnection}, state}
-  end
-  defp send_msg(msg, %State{conn: nil}=state) do
-    {:ok, conn} = connect(state)
-    send_msg(msg, %{state | conn: conn})
-  end
   defp send_msg(msg, %State{conn: conn, recv_timeout: timeout}=state) do
     case :gen_tcp.send(conn, msg) do
       :ok ->
         case recv_msg(conn, <<>>, timeout) do
-          {:ok, result} -> {:reply, result, state}
-          {:error, err} -> {:reply, {:error, err}, state}
+          {:ok, result} ->
+            {:reply, result, state}
+          {:error, :timeout} ->
+            {:reply, :timeout, state}
+          {:error, error} ->
+            {:disconnect, {:error, error}, error, state}
         end
-
-      {:error, _} = error ->
-        {:reply, error, state}
+      {:error, error} ->
+        {:disconnect, {:error, error}, error, state}
     end
   end
 
