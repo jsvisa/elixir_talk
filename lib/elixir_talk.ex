@@ -207,7 +207,7 @@ defmodule ElixirTalk do
   Return a list of all existing tubes in the server.
   """
 
-  @spec list_tubes(pid) :: List.t
+  @spec list_tubes(pid) :: list
   def list_tubes(pid) do
     Connect.call(pid, :list_tubes)
   end
@@ -225,7 +225,7 @@ defmodule ElixirTalk do
   Return the tubes currently being watched by the client.
   """
 
-  @spec list_tubes_watched(pid) :: List.t
+  @spec list_tubes_watched(pid) :: list
   def list_tubes_watched(pid) do
     Connect.call(pid, :list_tubes_watched)
   end
