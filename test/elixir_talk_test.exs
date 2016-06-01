@@ -114,4 +114,17 @@ defmodule ElixirTalkTest do
     assert ElixirTalk.delete(ctx[:pid], id) == :deleted
   end
 
+  test "with large body smaller than 2**16", ctx do
+    body = String.duplicate("{msg: \"hello world\"}", 500)
+    {:inserted, id} = ElixirTalk.put ctx[:pid], body
+    assert is_integer(id)
+    {:reserved, ^id, ^body} = ElixirTalk.reserve ctx[:pid], 0
+    assert ElixirTalk.delete(ctx[:pid], id) == :deleted
+  end
+
+  test "with large body larger than 2**16", ctx do
+    body = String.duplicate("{msg: \"hello world\"}", 5000)
+    :job_too_big = ElixirTalk.put ctx[:pid], body
+  end
+
 end
