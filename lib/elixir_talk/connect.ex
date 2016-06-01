@@ -112,7 +112,6 @@ defmodule ElixirTalk.Connect do
     send_msg(msg, %{state | conn: conn})
   end
   defp send_msg(msg, %State{conn: conn, recv_timeout: timeout}=state) do
-    Logger.info "Send : #{msg}"
     case :gen_tcp.send(conn, msg) do
       :ok ->
         case recv_msg(conn, <<>>, timeout) do
@@ -131,7 +130,7 @@ defmodule ElixirTalk.Connect do
         packet = <<buffer :: binary, data :: binary>>
         case parse(packet) do
           :more -> recv_msg(conn, packet, timeout)
-          {:ok, result, rest} -> {:ok, result}
+          {:ok, result, _rest} -> {:ok, result}
         end
       error ->
         error
