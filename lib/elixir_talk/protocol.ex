@@ -24,7 +24,7 @@ defmodule ElixirTalk.Protocol do
   def parse(<<"USING ", bin :: binary>>),               do: parse_str(bin, :using)
   def parse(<<"RESERVED ", bin :: binary>>),            do: parse_job(bin, :reserved)
   def parse(<<"FOUND ", bin :: binary>>),               do: parse_job(bin, :found)
-  def parse(<<"OK ", bin :: binary>>),                  do: parse_body(bin)
+  def parse(<<"OK ", bin :: binary>>),                  do: parse_yml(bin)
   def parse(_),                                         do: :more
 
   defp parse_int(bin, name) do
@@ -77,15 +77,24 @@ defmodule ElixirTalk.Protocol do
   end
 
   defp parse_body(bin) do
-    Logger.info "recv byte: #{inspect bin}"
+    # Logger.debug "Recv bytes: #{inspect bin}"
     case parse_digits(bin) do
       {:ok, length, <<"\r\n", rest :: binary>>} ->
         case rest do
           <<body :: size(length)-binary, "\r\n", rest :: binary>> ->
-            {:ok, YamlElixir.read_from_string(body), rest}
+            {:ok, body, rest}
           _ ->
             :more
         end
+      _ ->
+        :more
+    end
+  end
+
+  defp parse_yml(bin) do
+    case parse_body(bin) do
+      {:ok, body, rest} ->
+        {:ok, YamlElixir.read_from_string(body), rest}
       _ ->
         :more
     end
