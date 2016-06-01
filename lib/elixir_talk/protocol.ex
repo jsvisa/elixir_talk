@@ -28,14 +28,20 @@ defmodule ElixirTalk.Protocol do
   def parse(_),                                         do: :more
 
   defp parse_int(bin, name) do
-    {:ok, int, rest} = parse_digits(bin)
-    {:ok, {name, int}, rest}
+    case parse_digits(bin) do
+      {:ok, int, <<"\r\n", rest :: binary>>} ->
+        {:ok, {name, int}, rest}
+      _ ->
+        :more
+    end
   end
 
   def parse_digits(bin), do: parse_digits(bin, 0)
 
-  def parse_digits(<<"\r\n", rest :: binary>>, acc), do: {:ok, acc, rest}
-  def parse_digits(<<d :: integer, rest :: binary>>, acc), do: parse_digits(rest, acc * 10 + d - ?0)
+  def parse_digits(<<d :: integer, rest :: binary>>, acc) when d >= ?0 and d <= ?9,
+    do: parse_digits(rest, acc * 10 + d - ?0)
+  def parse_digits(rest, acc),
+    do: {:ok, acc, rest}
 
   defp parse_str(bin, name) do
     {:ok, str, rest} = parse_chars(bin, "")
@@ -43,7 +49,7 @@ defmodule ElixirTalk.Protocol do
   end
 
   defp parse_chars(<<"\r\n", rest :: binary>>, acc),
-    do: {:ok, rest, acc}
+    do: {:ok, acc, rest}
   defp parse_chars(<<c :: utf8, rest :: binary>>, acc),
     do: parse_chars(rest, <<acc :: binary, c :: utf8>>)
 
@@ -56,20 +62,27 @@ defmodule ElixirTalk.Protocol do
           :more ->
             :more
         end
-    :more ->
-      :more
+      :more ->
+        :more
     end
   end
 
-  defp parse_id(bin), do: parse_digits(bin)
+  defp parse_id(bin) do
+    case parse_digits(bin) do
+      {:ok, id, <<" ", rest :: binary>>} ->
+        {:ok, id, rest}
+      _ ->
+        :more
+    end
+  end
 
   defp parse_body(bin) do
     Logger.info "recv byte: #{inspect bin}"
     case parse_digits(bin) do
-      {:ok, length, rest} ->
+      {:ok, length, <<"\r\n", rest :: binary>>} ->
         case rest do
           <<body :: size(length)-binary, "\r\n", rest :: binary>> ->
-            {:ok, body, rest}
+            {:ok, YamlElixir.read_from_string(body), rest}
           _ ->
             :more
         end
