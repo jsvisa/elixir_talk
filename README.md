@@ -10,7 +10,7 @@ First, add ElixirTalk to your `mix.exs` dependencies:
 
 ```elixir
 def deps do
-  [{:elixir_talk, "~> 1.0.2"}]
+  [{:elixir_talk, "~> 1.1"}]
 end
 ```
 
@@ -37,7 +37,7 @@ After connection to the beanstalkd successfully, we can enqueue our jobs:
 Or we can get jobs:
 
     iex(3)> ElixirTalk.reserve(pid)
-    {:reserved, 1, {11, "hello world"}}
+    {:reserved, 1, "hello world"}
 
 Once we are finishing a job, we have to delete it, otherwise jobs are re-queued by **beanstalkd**
 after a `:ttr` "time to run" (60 seconds, per default) is surpassed. A job is marked as finished, by calling delete:
@@ -122,9 +122,9 @@ to put your jobs, while in another process you `watch` a job just to get the put
 
 **ElixirTalkd** accumulates various statistics at the server, tube and job level. Statistical details for a job can only be retrieved during the job's lifecycle. So let's create another job:
 
-    [id: 27, tube: "default", state: "ready", pri: 0, age: 379859, delay: 0,
-     ttr: 60, "time-left": 0, file: 0, reserves: 2, timeouts: 2, releases: 0,
-     buries: 0, kicks: 0]
+    %{"age" => 13, "buries" => 0, "delay" => 0, "file" => 0, "id" => 10,
+      "kicks" => 0, "pri" => 0, "releases" => 0, "reserves" => 1, "state" => "reserved",
+      "time-left" => 53, "timeouts" => 0, "ttr" => 60, "tube" => "default"}
 
 You can't access a deleted or not existed job's stats, or you'll only get a `:not_found`.
 
@@ -134,30 +134,32 @@ You can't access a deleted or not existed job's stats, or you'll only get a `:no
 You can also access a tube's statistics:
 
     iex(21)> ElixirTalk.stats_tube(pid, "default")
-    [name: "default", "current-jobs-urgent": 19, "current-jobs-ready": 19,
-     "current-jobs-reserved": 0, "current-jobs-delayed": 0,
-     "current-jobs-buried": 0, "total-jobs": 37, "current-using": 1,
-     "current-watching": 1, "current-waiting": 0, "cmd-delete": 18,
-     "cmd-pause-tube": 0, pause: 0, "pause-time-left": 0]
+    %{"cmd-delete" => 0, "cmd-pause-tube" => 0, "current-jobs-buried" => 0,
+      "current-jobs-delayed" => 0, "current-jobs-ready" => 1,
+      "current-jobs-reserved" => 0, "current-jobs-urgent" => 1,
+      "current-using" => 1, "current-waiting" => 0, "current-watching" => 1,
+      "name" => "default", "pause" => 0, "pause-time-left" => 0, "total-jobs" => 1}
 
 Finally, there's an abundant amount of server-level statistics accessible via the Connection's stats method:
 
     iex(22)> ElixirTalk.stats(pid)
-    ["current-jobs-urgent": 22, "current-jobs-ready": 28,
-     "current-jobs-reserved": 0, "current-jobs-delayed": 0,
-     "current-jobs-buried": 0, "cmd-put": 49, "cmd-peek": 0, "cmd-peek-ready": 13,
-     "cmd-peek-delayed": 4, "cmd-peek-buried": 4, "cmd-reserve": 56,
-     "cmd-reserve-with-timeout": 41, "cmd-delete": 22, "cmd-release": 0,
-     "cmd-use": 14, "cmd-watch": 7, "cmd-ignore": 8, "cmd-bury": 0, "cmd-kick": 0,
-     "cmd-touch": 0, "cmd-stats": 21, "cmd-stats-job": 8, "cmd-stats-tube": 13,
-     "cmd-list-tubes": 16, "cmd-list-tube-used": 17, "cmd-list-tubes-watched": 20,
-     "cmd-pause-tube": 0, "job-timeouts": 47, "total-jobs": 47,
-     "max-job-size": 65535, "current-tubes": 3, "current-connections": 1,
-     "current-producers": 0, "current-workers": 0, "current-waiting": 0,
-     "total-connections": 90, pid: 17492, version: 1.8, "rusage-utime": 15.396318,
-     "rusage-stime": 2312.522858, uptime: 454596, "binlog-oldest-index": 0,
-     "binlog-current-index": 0, "binlog-records-migrated": 0,
-     "binlog-records-written": 0, "binlog-max-size": 10485760]
+     %{"current-jobs-urgent" => 2, "cmd-peek" => 0, "uptime" => 1154,
+       "cmd-list-tubes-watched" => 3, "rusage-utime" => 0.0, "cmd-release" => 0,
+       "binlog-current-index" => 0, "cmd-watch" => 19, "total-connections" => 15,
+       "current-workers" => 1, "current-waiting" => 0, "cmd-ignore" => 15,
+       "id" => "def32f0744b36db5", "cmd-put" => 11, "job-timeouts" => 1,
+       "cmd-stats-tube" => 3, "max-job-size" => 65535, "current-producers" => 1,
+       "current-jobs-buried" => 0, "cmd-touch" => 0, "cmd-kick" => 0,
+       "current-tubes" => 2, "cmd-bury" => 0, "current-jobs-ready" => 2,
+       "cmd-stats" => 3, "cmd-list-tube-used" => 3, "version" => "1.10+4+g96e8756",
+       "binlog-records-migrated" => 0, "hostname" => "v",
+       "binlog-records-written" => 0, "current-jobs-reserved" => 0,
+       "cmd-peek-ready" => 0, "cmd-pause-tube" => 0, "current-jobs-delayed" => 0,
+       "cmd-peek-buried" => 0, "cmd-use" => 16, "cmd-reserve" => 2,
+       "current-connections" => 1, "rusage-stime" => 0.014314,
+       "cmd-reserve-with-timeout" => 2, "binlog-oldest-index" => 0, "pid" => 9987,
+       "binlog-max-size" => 10485760, "total-jobs" => 10, "cmd-delete" => 9,
+       "cmd-list-tubes" => 3, "cmd-stats-job" => 3, "cmd-peek-delayed" => 0}
 
 
 ## Test
