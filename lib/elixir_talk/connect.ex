@@ -90,7 +90,7 @@ defmodule ElixirTalk.Connect do
     {:stop, :normal, state}
   end
 
-  def terminate(:normal, %State{conn: conn}) do
+  def terminate(_, %State{conn: conn}) do
     :gen_tcp.close(conn)
     :ok
   end
