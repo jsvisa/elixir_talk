@@ -244,7 +244,7 @@ defmodule ElixirTalk do
   """
 
   @spec reserve(pid, non_neg_integer) ::
-    {:reserved, non_neg_integer, {non_neg_integer, String.t}} |
+    {:reserved, non_neg_integer, String.t} |
     :deadline_soon |
     :timed_out
   def reserve(pid, timeout) do
