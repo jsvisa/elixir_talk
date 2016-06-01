@@ -124,7 +124,56 @@ defmodule ElixirTalkTest do
 
   test "with large body larger than 2**16", ctx do
     body = String.duplicate("{msg: \"hello world\"}", 5000)
-    :job_too_big = ElixirTalk.put ctx[:pid], body
+    assert :job_too_big == ElixirTalk.put ctx[:pid], body
+  end
+
+  test "`stats`", ctx do
+    stats = ElixirTalk.stats(ctx[:pid])
+    assert is_map(stats)
+
+    keys = ["current-jobs-urgent", "cmd-peek", "uptime", "cmd-list-tubes-watched",
+            "rusage-utime", "cmd-release", "binlog-current-index", "cmd-watch",
+            "total-connections", "current-workers", "current-waiting", "cmd-ignore", "id",
+            "cmd-put", "job-timeouts", "cmd-stats-tube", "max-job-size",
+            "current-producers", "current-jobs-buried", "cmd-touch", "cmd-kick",
+            "current-tubes", "cmd-bury", "current-jobs-ready", "cmd-stats",
+            "cmd-list-tube-used", "version", "binlog-records-migrated", "hostname",
+            "binlog-records-written", "current-jobs-reserved", "cmd-peek-ready",
+            "cmd-pause-tube", "current-jobs-delayed", "cmd-peek-buried", "cmd-use",
+            "cmd-reserve", "current-connections", "rusage-stime",
+            "cmd-reserve-with-timeout", "binlog-oldest-index", "pid", "binlog-max-size",
+            "total-jobs", "cmd-delete", "cmd-list-tubes", "cmd-stats-job",
+            "cmd-peek-delayed"]
+          |> Enum.into(MapSet.new)
+    assert MapSet.equal?(Enum.into(Map.keys(stats), MapSet.new), keys)
+  end
+
+  test "`stats_job`", ctx do
+    {:inserted, id} = ElixirTalk.put ctx[:pid], "put to ensure has jobs"
+
+    stats = ElixirTalk.stats_job(ctx[:pid], id)
+    assert is_map(stats)
+
+    keys = ["id", "tube", "state", "pri", "age", "delay", "ttr", "time-left",
+             "file", "reserves", "timeouts", "releases", "buries", "kicks"]
+          |> Enum.into(MapSet.new)
+    assert MapSet.equal?(Enum.into(Map.keys(stats), MapSet.new), keys)
+
+    ElixirTalk.delete(ctx[:pid], id)
+  end
+
+  test "`stats_tube`", ctx do
+    stats = ElixirTalk.stats_tube(ctx[:pid], ctx[:tube])
+    assert is_map(stats)
+
+    keys = ["cmd-delete", "cmd-pause-tube", "current-jobs-buried", "current-jobs-delayed",
+            "current-jobs-ready", "current-jobs-reserved", "current-jobs-urgent",
+            "current-using", "current-waiting", "current-watching", "name", "pause",
+            "pause-time-left", "total-jobs"]
+          |> Enum.into(MapSet.new)
+    assert MapSet.equal?(Enum.into(Map.keys(stats), MapSet.new), keys)
+
+    assert :not_found == ElixirTalk.stats_tube(ctx[:pid], ctx[:tube] <> "_notfound")
   end
 
 end
