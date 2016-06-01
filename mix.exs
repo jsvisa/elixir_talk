@@ -19,12 +19,14 @@ defmodule ElixirTalk.Mixfile do
   end
 
   def application do
-    []
+    [applications: [:logger, :yaml_elixir]]
   end
 
   defp deps do
-    [{:earmark, "~> 0.1", only: :doc},
-     {:ex_doc, "~> 0.11", only: :doc}]
+    [{:earmark,     "~> 0.1", only: :doc},
+     {:ex_doc,      "~> 0.11", only: :doc},
+     {:yaml_elixir, "~> 1.0.0"},
+     {:yamerl,      github: "yakaz/yamerl"}]
   end
 
   defp description do
