@@ -1,21 +1,31 @@
 defmodule ElixirTalk do
+  alias ElixirTalk.Connect
 
   @moduledoc """
   ElixirTalk - A beanstalkd client coding with Elixir
 
   from
-  Copyright 2014 by jsvisa(delweng@gmail.com)
+  Copyright 2014-2016 by jsvisa(delweng@gmail.com)
   """
-  @type result :: {:inserted, non_neg_integer} | {:buried, non_neg_integer} | {:expected_crlf} | :job_to_big | :darining
+  @type result :: {:inserted, non_neg_integer} |
+                  {:buried, non_neg_integer} |
+                  {:expected_crlf} |
+                  :job_too_big |
+                  :darining
   @vsn 1.0
 
   @doc """
   Connect to the beanstalkd server.
   """
 
+  @spec connect(List.t) :: {:ok, pid} | {:error, term}
+  def connect(opts) when is_list(opts) do
+    Connect.start_link(opts)
+  end
+
   @spec connect(:inet.ip_address | :inet.hostname, integer, integer) :: {:ok, pid} | {:error, term}
   def connect(host \\ '127.0.0.1', port \\ 11300, timeout \\ :infinity) do
-    ElixirTalk.Connect.start_link([host, port, timeout])
+    connect([host: host, port: port, recv_timeout: timeout, connect_timeout: 5_000])
   end
 
   @doc """
@@ -23,38 +33,41 @@ defmodule ElixirTalk do
   """
   @spec quit(pid) :: :ok
   def quit(pid) do
-    ElixirTalk.Connect.quit(pid)
+    Connect.quit(pid)
   end
 
   @doc """
   Put a job to the current tube.
 
   The opts can be any combination of
-  `:pri`    : an integer < 2**32. Jobs with smaller priority values will be
-              scheduled before jobs with larger priorities. The most urgent priority is 0;
-              the least urgent priority is 4,294,967,295.
-  `:delay`  : an integer number of seconds to wait before putting the job in
-              the ready queue. The job will be in the "delayed" state during this time.
-  `:ttr`    : time to run -- is an integer number of seconds to allow a worker
-              to run this job. This time is counted from the moment a worker reserves
-              this job. If the worker does not delete, release, or bury the job within
-              `:ttr` seconds, the job will time out and the server will release the job.
-              The minimum ttr is 1. If the client sends 0, the server will silently
-              increase the ttr to 1.
+
+    * `:pri` - an integer < 2**32. Jobs with smaller priority values will be
+      scheduled before jobs with larger priorities. The most urgent priority is 0;
+      the least urgent priority is 4,294,967,295.
+
+    * `:delay` - an integer number of seconds to wait before putting the job in
+      the ready queue. The job will be in the "delayed" state during this time.
+
+    * `:ttr` -time to run -- is an integer number of seconds to allow a worker
+      to run this job. This time is counted from the moment a worker reserves
+      this job. If the worker does not delete, release, or bury the job within
+      `:ttr` seconds, the job will time out and the server will release the job.
+      The minimum ttr is 1. If the client sends 0, the server will silently
+      increase the ttr to 1.
   """
-  @spec put(pid, bitstring) :: result
-  @spec put(pid, bitstring, Keyword) :: result
+  @spec put(pid, String.t) :: result
+  @spec put(pid, String.t, Keyword.t) :: result
   def put(pid, data, opts \\ []) do
-    ElixirTalk.Connect.call(pid, {:put, data, opts})
+    Connect.call(pid, {:put, data, opts})
   end
 
   @doc """
   Use a tube to `put` jobs.
   """
 
-  @spec use(pid, bitstring) :: {:using, bitstring}
+  @spec use(pid, String.t) :: {:using, String.t}
   def use(pid, tube) do
-    ElixirTalk.Connect.call(pid, {:use, tube})
+    Connect.call(pid, {:use, tube})
   end
 
   @doc """
@@ -63,17 +76,17 @@ defmodule ElixirTalk do
   watch list.
   """
 
-  @spec watch(pid, bitstring) :: {:watcing, non_neg_integer}
+  @spec watch(pid, String.t) :: {:watcing, non_neg_integer}
   def watch(pid, tube) do
-    ElixirTalk.Connect.call(pid, {:watch, tube})
+    Connect.call(pid, {:watch, tube})
   end
 
   @doc """
   Remove the named tube from the watch list for the current connection.
   """
-  @spec ignore(pid, bitstring) :: {:watching, non_neg_integer} | :not_ingored
+  @spec ignore(pid, String.t) :: {:watching, non_neg_integer} | :not_ingored
   def ignore(pid, tube) do
-    ElixirTalk.Connect.call(pid, {:ignore, tube})
+    Connect.call(pid, {:ignore, tube})
   end
 
   @doc """
@@ -85,7 +98,7 @@ defmodule ElixirTalk do
 
   @spec delete(pid, non_neg_integer) :: :deleted | :not_found
   def delete(pid, id) do
-    ElixirTalk.Connect.call(pid, {:delete, id})
+    Connect.call(pid, {:delete, id})
   end
 
   @doc """
@@ -99,7 +112,7 @@ defmodule ElixirTalk do
 
   @spec touch(pid, non_neg_integer) :: :touched | :not_found
   def touch(pid, id) do
-    ElixirTalk.Connect.call(pid, {:touch, id})
+    Connect.call(pid, {:touch, id})
   end
 
   @doc """
@@ -108,7 +121,7 @@ defmodule ElixirTalk do
 
   @spec peek(pid, non_neg_integer) :: {:found, non_neg_integer} | :not_found
   def peek(pid, id) do
-    ElixirTalk.Connect.call(pid, {:peek, id})
+    Connect.call(pid, {:peek, id})
   end
 
   @doc """
@@ -117,7 +130,7 @@ defmodule ElixirTalk do
 
   @spec peek_ready(pid) :: {:found, non_neg_integer} | :not_found
   def peek_ready(pid) do
-    ElixirTalk.Connect.call(pid, :peek_ready)
+    Connect.call(pid, :peek_ready)
   end
 
   @doc """
@@ -126,7 +139,7 @@ defmodule ElixirTalk do
 
   @spec peek_delayed(pid) :: {:found, non_neg_integer} | :not_found
   def peek_delayed(pid) do
-    ElixirTalk.Connect.call(pid, :peek_delayed)
+    Connect.call(pid, :peek_delayed)
   end
 
   @doc """
@@ -135,7 +148,7 @@ defmodule ElixirTalk do
 
   @spec peek_buried(pid) :: {:found, non_neg_integer} | :not_found
   def peek_buried(pid) do
-    ElixirTalk.Connect.call(pid, :peek_buried)
+    Connect.call(pid, :peek_buried)
   end
 
   @doc """
@@ -147,7 +160,7 @@ defmodule ElixirTalk do
 
   @spec kick(pid, non_neg_integer) :: {:kicked, non_neg_integer}
   def kick(pid, bound) do
-    ElixirTalk.Connect.call(pid, {:kick, bound})
+    Connect.call(pid, {:kick, bound})
   end
 
   @doc """
@@ -158,16 +171,16 @@ defmodule ElixirTalk do
 
   @spec kick_job(pid, non_neg_integer) :: :kicked | :not_found
   def kick_job(pid, id) do
-    ElixirTalk.Connect.call(pid, {:kick_job, id})
+    Connect.call(pid, {:kick_job, id})
   end
 
   @doc """
   Give statistical information about the system as a whole.
   """
 
-  @spec stats(pid) :: Keyword
+  @spec stats(pid) :: Keyword.t
   def stats(pid) do
-    ElixirTalk.Connect.call(pid, :stats)
+    Connect.call(pid, :stats)
   end
 
   @doc """
@@ -175,9 +188,9 @@ defmodule ElixirTalk do
   it exists.
   """
 
-  @spec stats_job(pid, non_neg_integer) :: Keyword | :not_found
+  @spec stats_job(pid, non_neg_integer) :: Keyword.t | :not_found
   def stats_job(pid, id) do
-    ElixirTalk.Connect.call(pid, {:stats_job, id})
+    Connect.call(pid, {:stats_job, id})
   end
 
   @doc """
@@ -185,56 +198,57 @@ defmodule ElixirTalk do
   if it exists.
   """
 
-  @spec stats_tube(pid, bitstring) :: Keyword | :not_found
+  @spec stats_tube(pid, String.t) :: Keyword.t | :not_found
   def stats_tube(pid, tube) do
-    ElixirTalk.Connect.call(pid, {:stats_tube, tube})
+    Connect.call(pid, {:stats_tube, tube})
   end
 
   @doc """
   Return a list of all existing tubes in the server.
   """
 
-  @spec list_tubes(pid) :: List
+  @spec list_tubes(pid) :: List.t
   def list_tubes(pid) do
-    ElixirTalk.Connect.call(pid, :list_tubes)
+    Connect.call(pid, :list_tubes)
   end
 
   @doc """
   Return the tube currently being used by the client.
   """
 
-  @spec list_tube_used(pid) :: {:using, binary}
+  @spec list_tube_used(pid) :: {:using, String.t}
   def list_tube_used(pid) do
-    ElixirTalk.Connect.call(pid, :list_tube_used)
+    Connect.call(pid, :list_tube_used)
   end
 
   @doc """
   Return the tubes currently being watched by the client.
   """
 
-  @spec list_tubes_watched(pid) :: List
+  @spec list_tubes_watched(pid) :: List.t
   def list_tubes_watched(pid) do
-    ElixirTalk.Connect.call(pid, :list_tubes_watched)
+    Connect.call(pid, :list_tubes_watched)
   end
 
   @doc """
   Get a job from the currently watched tubes.
   """
 
-  @spec reserve(pid) :: {:reserved, non_neg_integer, bitstring}
+  @spec reserve(pid) :: {:reserved, non_neg_integer, String.t}
   def reserve(pid) do
-    ElixirTalk.Connect.call(pid, :reserve, :infinity)
+    Connect.call(pid, :reserve, :infinity)
   end
 
   @doc """
   Get a job from the currently watched tubes with timeout of seconds.
   """
 
-  @spec reserve(pid, non_neg_integer) :: {:reserved, non_neg_integer, {non_neg_integer, binary}} |
-                                         :deadline_soon |
-                                         :timed_out
+  @spec reserve(pid, non_neg_integer) ::
+    {:reserved, non_neg_integer, {non_neg_integer, String.t}} |
+    :deadline_soon |
+    :timed_out
   def reserve(pid, timeout) do
-    ElixirTalk.Connect.call(pid, {:reserve_with_timeout, timeout}, :infinity)
+    Connect.call(pid, {:reserve_with_timeout, timeout}, :infinity)
   end
 
   @doc """
@@ -246,16 +260,16 @@ defmodule ElixirTalk do
   @spec bury(pid, non_neg_integer) :: :buried | :not_found
   @spec bury(pid, non_neg_integer, non_neg_integer) :: :buried | :not_found
   def bury(pid, id, pri \\ 0) do
-    ElixirTalk.Connect.call(pid, {:bury, id, pri})
+    Connect.call(pid, {:bury, id, pri})
   end
 
   @doc """
   Delay any new job being reserved for a given time.
   """
 
-  @spec pause_tube(pid, bitstring, non_neg_integer) :: :paused | :not_found
+  @spec pause_tube(pid, String.t, non_neg_integer) :: :paused | :not_found
   def pause_tube(pid, tube, delay) do
-    ElixirTalk.Connect.call(pid, {:pause_tube, tube, delay})
+    Connect.call(pid, {:pause_tube, tube, delay})
   end
 
   @doc """
@@ -263,15 +277,17 @@ defmodule ElixirTalk do
   to be run by any client. It is normally used when the job fails because of a transitory error.
 
   The opts can any combination of
-  `:pri`    : a new priority to assign to the job;
-  `:delay`  : an integer number of seconds to wait before putting the job back in the ready queue.
-              The job will be in the "delayed" state during this time.
+
+  * `:pri` - a new priority to assign to the job;
+
+  * `:delay` - an integer number of seconds to wait before putting the job back in the ready queue.
+    The job will be in the "delayed" state during this time.
   """
 
   @spec release(pid, non_neg_integer) :: :released | :buried | :not_found
   @spec release(pid, non_neg_integer, Keyword) :: :released | :buried | :not_found
   def release(pid, id, opts \\ []) do
-    ElixirTalk.Connect.call(pid, {:release, id, opts})
+    Connect.call(pid, {:release, id, opts})
   end
 
 end

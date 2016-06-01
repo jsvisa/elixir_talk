@@ -2,7 +2,7 @@ defmodule ElixirTalkTest do
   use ExUnit.Case
 
   setup do
-    {:ok, pid} = ElixirTalk.connect '192.168.33.10', 11300
+    {:ok, pid} = ElixirTalk.connect '192.168.99.10', 11300
 
     {m, s, ms} = :os.timestamp
     tube = "ElixirTalk_#{m}_#{s}_#{ms}"
@@ -10,19 +10,19 @@ defmodule ElixirTalkTest do
     ElixirTalk.watch pid, tube
     ElixirTalk.ignore pid, "default"
 
-    on_exit fn -> ElixirTalk.quit(pid) end
+    # Don't have to manually stop it, because ExUnit will send `shutdown` to the runner
+    # on_exit fn -> ElixirTalk.quit(pid) end
     {:ok, [tube: tube, pid: pid]}
   end
 
-  test "`connect`" do
+  test "`connect` domain" do
     {:ok, pid} = ElixirTalk.connect 'my.beanstalkd.com', 11300
-
-    on_exit fn -> ElixirTalk.quit(pid) end
+    assert is_pid(pid)
   end
 
   test "`put`", ctx do
     {:inserted, id1} = ElixirTalk.put ctx[:pid], "hello world"
-    assert is_integer(id1) == true
+    assert is_integer(id1)
 
     {:inserted, id2} = ElixirTalk.put(ctx[:pid], "hello world", pri: 1)
     assert is_integer(id2) == true and id2 - id1 == 1
@@ -39,6 +39,7 @@ defmodule ElixirTalkTest do
   test "`put` unicode", ctx do
     {:inserted, id} = ElixirTalk.put ctx[:pid], "hełło"
     assert is_integer(id)
+    ElixirTalk.delete(ctx[:pid], id)
   end
 
   test "`use`", ctx do
@@ -53,9 +54,9 @@ defmodule ElixirTalkTest do
   test "`reserved`", ctx do
     str = "hello world"
     {:inserted, put_id} = ElixirTalk.put ctx[:pid], str
-    {:reserved, expected_id, {byte, expected_str}} = ElixirTalk.reserve ctx[:pid]
+    {:reserved, expected_id, expected_str} = ElixirTalk.reserve ctx[:pid]
     assert put_id == expected_id
-    assert str == expected_str && byte == byte_size(str)
+    assert str == expected_str
   end
 
   test "`ignore`", ctx do
@@ -111,6 +112,19 @@ defmodule ElixirTalkTest do
     {:inserted, id} = ElixirTalk.put ctx[:pid], "another job"
     {:reserved, ^id, _} = ElixirTalk.reserve ctx[:pid], 0
     assert ElixirTalk.delete(ctx[:pid], id) == :deleted
+  end
+
+  test "with large body smaller than 2**16", ctx do
+    body = String.duplicate("{msg: \"hello world\"}", 500)
+    {:inserted, id} = ElixirTalk.put ctx[:pid], body
+    assert is_integer(id)
+    {:reserved, ^id, ^body} = ElixirTalk.reserve ctx[:pid], 0
+    assert ElixirTalk.delete(ctx[:pid], id) == :deleted
+  end
+
+  test "with large body larger than 2**16", ctx do
+    body = String.duplicate("{msg: \"hello world\"}", 5000)
+    :job_too_big = ElixirTalk.put ctx[:pid], body
   end
 
 end

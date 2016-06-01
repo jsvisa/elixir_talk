@@ -5,11 +5,16 @@
 It supported all commands defined in [Beanstalkd Protocol](https://raw.github.com/kr/beanstalkd/master/doc/protocol.txt)
 
 ## Installation & Setup
-Clone this repository and then compile the project:
 
-    $ git clone https://github.com/jsvisa/elixir_talk
-    $ cd elixir_talk
-    $ make
+First, add ElixirTalk to your `mix.exs` dependencies:
+
+```elixir
+def deps do
+  [{:elixir_talk, "~> 1.0.2"}]
+end
+```
+
+and run `$ mix deps.get`.
 
 ## Getting Started
 You'll need **beanstalkd** listening at the host: `10.1.1.5`, and port: `14711`, simply start it with:
