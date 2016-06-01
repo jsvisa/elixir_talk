@@ -18,9 +18,14 @@ defmodule ElixirTalk do
   Connect to the beanstalkd server.
   """
 
+  @spec connect(List.t) :: {:ok, pid} | {:error, term}
+  def connect(opts) when is_list(opts) do
+    Connect.start_link(opts)
+  end
+
   @spec connect(:inet.ip_address | :inet.hostname, integer, integer) :: {:ok, pid} | {:error, term}
   def connect(host \\ '127.0.0.1', port \\ 11300, timeout \\ :infinity) do
-    Connect.start_link([host, port, timeout])
+    connect([host: host, port: port, recv_timeout: timeout, connect_timeout: 5_000])
   end
 
   @doc """
