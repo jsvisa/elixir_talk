@@ -178,7 +178,7 @@ defmodule ElixirTalk do
   Give statistical information about the system as a whole.
   """
 
-  @spec stats(pid) :: Keyword.t
+  @spec stats(pid) :: Map.t
   def stats(pid) do
     Connect.call(pid, :stats)
   end
@@ -188,7 +188,7 @@ defmodule ElixirTalk do
   it exists.
   """
 
-  @spec stats_job(pid, non_neg_integer) :: Keyword.t | :not_found
+  @spec stats_job(pid, non_neg_integer) :: Map.t | :not_found
   def stats_job(pid, id) do
     Connect.call(pid, {:stats_job, id})
   end
@@ -198,7 +198,7 @@ defmodule ElixirTalk do
   if it exists.
   """
 
-  @spec stats_tube(pid, String.t) :: Keyword.t | :not_found
+  @spec stats_tube(pid, String.t) :: Map.t | :not_found
   def stats_tube(pid, tube) do
     Connect.call(pid, {:stats_tube, tube})
   end
