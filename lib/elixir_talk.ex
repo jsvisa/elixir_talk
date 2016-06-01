@@ -11,7 +11,7 @@ defmodule ElixirTalk do
                   {:buried, non_neg_integer} |
                   {:expected_crlf} |
                   :job_too_big |
-                  :darining
+                  :draining
   @vsn 1.0
 
   @doc """
@@ -23,7 +23,7 @@ defmodule ElixirTalk do
     Connect.start_link(opts)
   end
 
-  @spec connect(:inet.ip_address | :inet.hostname, integer, integer) :: {:ok, pid} | {:error, term}
+  @spec connect(:inet.ip_address | :inet.hostname, integer, timeout) :: {:ok, pid} | {:error, term}
   def connect(host \\ '127.0.0.1', port \\ 11300, timeout \\ :infinity) do
     connect([host: host, port: port, recv_timeout: timeout, connect_timeout: 5_000])
   end
@@ -56,7 +56,7 @@ defmodule ElixirTalk do
       increase the ttr to 1.
   """
   @spec put(pid, String.t) :: result
-  @spec put(pid, String.t, Keyword.t) :: result
+  @spec put(pid, String.t, [{:pri, integer}, {:delay, integer}, {:ttr, integer}]) :: result
   def put(pid, data, opts \\ []) do
     Connect.call(pid, {:put, data, opts})
   end
@@ -76,7 +76,7 @@ defmodule ElixirTalk do
   watch list.
   """
 
-  @spec watch(pid, String.t) :: {:watcing, non_neg_integer}
+  @spec watch(pid, String.t) :: {:watching, non_neg_integer}
   def watch(pid, tube) do
     Connect.call(pid, {:watch, tube})
   end
@@ -84,7 +84,7 @@ defmodule ElixirTalk do
   @doc """
   Remove the named tube from the watch list for the current connection.
   """
-  @spec ignore(pid, String.t) :: {:watching, non_neg_integer} | :not_ingored
+  @spec ignore(pid, String.t) :: {:watching, non_neg_integer} | :not_ignored
   def ignore(pid, tube) do
     Connect.call(pid, {:ignore, tube})
   end
@@ -207,7 +207,7 @@ defmodule ElixirTalk do
   Return a list of all existing tubes in the server.
   """
 
-  @spec list_tubes(pid) :: List.t
+  @spec list_tubes(pid) :: list
   def list_tubes(pid) do
     Connect.call(pid, :list_tubes)
   end
@@ -225,7 +225,7 @@ defmodule ElixirTalk do
   Return the tubes currently being watched by the client.
   """
 
-  @spec list_tubes_watched(pid) :: List.t
+  @spec list_tubes_watched(pid) :: list
   def list_tubes_watched(pid) do
     Connect.call(pid, :list_tubes_watched)
   end
@@ -285,7 +285,7 @@ defmodule ElixirTalk do
   """
 
   @spec release(pid, non_neg_integer) :: :released | :buried | :not_found
-  @spec release(pid, non_neg_integer, Keyword) :: :released | :buried | :not_found
+  @spec release(pid, non_neg_integer, [{:pri, integer}, {:delay, integer}]) :: :released | :buried | :not_found
   def release(pid, id, opts \\ []) do
     Connect.call(pid, {:release, id, opts})
   end
