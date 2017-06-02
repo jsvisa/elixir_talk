@@ -17,6 +17,7 @@ defmodule ElixirTalk.Protocol do
   def parse(<<"BURIED\r\n", rest :: binary>>),          do: {:ok, :buried, rest}
   def parse(<<"TOUCHED\r\n", rest :: binary>>),         do: {:ok, :touched, rest}
   def parse(<<"NOT_IGNORED\r\n", rest :: binary>>),     do: {:ok, :not_ignored, rest}
+  def parse(<<"KICKED\r\n", rest :: binary>>),          do: {:ok, :kicked, rest}
   def parse(<<"INSERTED ", bin :: binary>>),            do: parse_int(bin, :inserted)
   def parse(<<"BURIED ", bin :: binary>>),              do: parse_int(bin, :buried)
   def parse(<<"WATCHING ", bin :: binary>>),            do: parse_int(bin, :watching)
