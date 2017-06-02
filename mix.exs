@@ -27,7 +27,7 @@ defmodule ElixirTalk.Mixfile do
      {:earmark,     "~> 0.1", only: :doc},
      {:ex_doc,      "~> 0.11", only: :doc},
      {:yaml_elixir, "~> 1.0.0"},
-     {:yamerl,      github: "yakaz/yamerl"}]
+     {:yamerl,      "~> 0.4.0"}]
   end
 
   defp description do
