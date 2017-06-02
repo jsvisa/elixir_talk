@@ -38,7 +38,7 @@ defmodule ElixirTalk.Mixfile do
 
   defp package do
     [ files: ["lib", "test", "mix.exs", "README.md", "LICENSE"],
-      contributors: ["Delweng Zheng"],
+      maintainers: ["Delweng Zheng"],
       licenses: ["MIT"],
       links: %{"GitHub": "https://github.com/jsvisa/elixir_talk"} ]
   end
