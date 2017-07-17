@@ -18,6 +18,7 @@ defmodule ElixirTalk.Protocol do
   def parse(<<"TOUCHED\r\n", rest :: binary>>),         do: {:ok, :touched, rest}
   def parse(<<"NOT_IGNORED\r\n", rest :: binary>>),     do: {:ok, :not_ignored, rest}
   def parse(<<"KICKED\r\n", rest :: binary>>),          do: {:ok, :kicked, rest}
+  def parse(<<"PAUSED\r\n", rest :: binary>>),          do: {:ok, :paused, rest}
   def parse(<<"INSERTED ", bin :: binary>>),            do: parse_int(bin, :inserted)
   def parse(<<"BURIED ", bin :: binary>>),              do: parse_int(bin, :buried)
   def parse(<<"WATCHING ", bin :: binary>>),            do: parse_int(bin, :watching)
@@ -102,4 +103,3 @@ defmodule ElixirTalk.Protocol do
   end
 
 end
-
