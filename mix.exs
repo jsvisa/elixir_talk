@@ -7,9 +7,9 @@ defmodule ElixirTalk.Mixfile do
     [ app: :elixir_talk,
       version: @version,
       elixir: "~> 1.0",
-      description: description,
-      package: package,
-      deps: deps,
+      description: description(),
+      package: package(),
+      deps: deps(),
 
       name: "ElixirTalk",
       docs: [extras: ["README.md"],
